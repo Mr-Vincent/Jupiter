@@ -16,7 +16,7 @@
 
 package org.jupiter.rpc.provider.processor;
 
-import org.jupiter.common.util.ExceptionUtil;
+import org.jupiter.common.util.ThrowUtil;
 import org.jupiter.common.util.internal.logging.InternalLogger;
 import org.jupiter.common.util.internal.logging.InternalLoggerFactory;
 import org.jupiter.rpc.JRequest;
@@ -28,8 +28,8 @@ import org.jupiter.serialization.SerializerFactory;
 import org.jupiter.transport.Status;
 import org.jupiter.transport.channel.JChannel;
 import org.jupiter.transport.channel.JFutureListener;
-import org.jupiter.transport.payload.JRequestBytes;
-import org.jupiter.transport.payload.JResponseBytes;
+import org.jupiter.transport.payload.JRequestPayload;
+import org.jupiter.transport.payload.JResponsePayload;
 import org.jupiter.transport.processor.ProviderProcessor;
 
 import static org.jupiter.common.util.StackTraceUtil.stackTrace;
@@ -46,7 +46,7 @@ public abstract class AbstractProviderProcessor implements
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(AbstractProviderProcessor.class);
 
     @Override
-    public void handleException(JChannel channel, JRequestBytes request, Status status, Throwable cause) {
+    public void handleException(JChannel channel, JRequestPayload request, Status status, Throwable cause) {
         logger.error("An exception was caught while processing request: {}, {}.",
                 channel.remoteAddress(), stackTrace(cause));
 
@@ -76,13 +76,13 @@ public abstract class AbstractProviderProcessor implements
 
         ResultWrapper result = new ResultWrapper();
         // 截断cause, 避免客户端无法找到cause类型而无法序列化
-        cause = ExceptionUtil.cutCause(cause);
+        cause = ThrowUtil.cutCause(cause);
         result.setError(cause);
 
         Serializer serializer = SerializerFactory.getSerializer(s_code);
         byte[] bytes = serializer.writeObject(result);
 
-        JResponseBytes response = new JResponseBytes(invokeId);
+        JResponsePayload response = new JResponsePayload(invokeId);
         response.status(status);
         response.bytes(s_code, bytes);
 

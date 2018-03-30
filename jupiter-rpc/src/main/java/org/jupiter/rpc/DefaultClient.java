@@ -44,7 +44,7 @@ public class DefaultClient implements JClient {
     static {
         // touch off TracingUtil.<clinit>
         // because getLocalAddress() and getPid() sometimes too slow
-        ClassUtil.classInitialize("org.jupiter.rpc.tracing.TracingUtil", 500);
+        ClassUtil.initializeClass("org.jupiter.rpc.tracing.TracingUtil", 500);
     }
 
     // 服务订阅(SPI)
@@ -138,21 +138,36 @@ public class DefaultClient implements JClient {
                         UnresolvedAddress address = new UnresolvedAddress(registerMeta.getHost(), registerMeta.getPort());
                         final JChannelGroup group = connector.group(address);
                         if (event == NotifyEvent.CHILD_ADDED) {
-                            if (!group.isAvailable()) {
-                                JConnection[] connections = connectTo(address, group, registerMeta, true);
-                                for (JConnection c : connections) {
-                                    c.operationComplete(new Runnable() {
+                            if (group.isAvailable()) {
+                                onSucceed(group, signalNeeded.getAndSet(false));
+                            } else {
+                                if (group.isConnecting()) {
+                                    group.onAvailable(new Runnable() {
 
                                         @Override
                                         public void run() {
                                             onSucceed(group, signalNeeded.getAndSet(false));
                                         }
                                     });
+                                } else {
+                                    group.setConnecting(true);
+                                    try {
+                                        JConnection[] connections = connectTo(address, group, registerMeta, true);
+                                        for (JConnection c : connections) {
+                                            c.operationComplete(new Runnable() {
+
+                                                @Override
+                                                public void run() {
+                                                    onSucceed(group, signalNeeded.getAndSet(false));
+                                                }
+                                            });
+                                        }
+                                    } finally {
+                                        group.setConnecting(false);
+                                    }
                                 }
-                            } else {
-                                onSucceed(group, signalNeeded.getAndSet(false));
                             }
-                            group.setWeight(directory, registerMeta.getWeight()); // 设置权重
+                            group.putWeight(directory, registerMeta.getWeight()); // 设置权重
                         } else if (event == NotifyEvent.CHILD_REMOVED) {
                             connector.removeChannelGroup(directory, group);
                             group.removeWeight(directory);
@@ -172,18 +187,18 @@ public class DefaultClient implements JClient {
                             JConnection connection = connector.connect(address, async);
                             connections[i] = connection;
                             connectionManager.manage(connection);
-
-                            offlineListening(address, new OfflineListener() {
-
-                                @Override
-                                public void offline() {
-                                    connectionManager.cancelReconnect(address); // 取消自动重连
-                                    if (!group.isAvailable()) {
-                                        connector.removeChannelGroup(directory, group);
-                                    }
-                                }
-                            });
                         }
+
+                        offlineListening(address, new OfflineListener() {
+
+                            @Override
+                            public void offline() {
+                                connectionManager.cancelReconnect(address); // 取消自动重连
+                                if (!group.isAvailable()) {
+                                    connector.removeChannelGroup(directory, group);
+                                }
+                            }
+                        });
 
                         return connections;
                     }
@@ -224,7 +239,7 @@ public class DefaultClient implements JClient {
                         }
                     }
                 } catch (InterruptedException e) {
-                    ExceptionUtil.throwException(e);
+                    ThrowUtil.throwException(e);
                 } finally {
                     _look.unlock();
                 }
