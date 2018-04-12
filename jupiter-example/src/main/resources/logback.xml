@@ -40,4 +40,8 @@
     <root level="INFO">
         <appender-ref ref="ASYNC_OUT" />
     </root>
+
+    <root level="DEBUG">
+        <appender-ref ref="ASYNC_OUT" />
+    </root>
 </configuration>
