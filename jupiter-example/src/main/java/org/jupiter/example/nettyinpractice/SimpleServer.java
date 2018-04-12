@@ -1,12 +1,13 @@
 package org.jupiter.example.nettyinpractice;
 
-import io.netty.bootstrap.ServerBootstrap;
 import io.netty.buffer.ByteBuf;
-import io.netty.channel.*;
-import io.netty.channel.nio.NioEventLoopGroup;
-import io.netty.channel.socket.SocketChannel;
-import io.netty.channel.socket.nio.NioServerSocketChannel;
-import io.netty.handler.logging.LoggingHandler;
+import io.netty.channel.ChannelHandler;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelInboundHandlerAdapter;
+import io.netty.channel.SimpleChannelInboundHandler;
+import io.netty.util.Attribute;
+import io.netty.util.AttributeKey;
+
 
 /**
  * Created with IntelliJ IDEA.
@@ -17,6 +18,8 @@ import io.netty.handler.logging.LoggingHandler;
  * Time: 11:21
  */
 public class SimpleServer extends AbstractServer{
+
+    private static final AttributeKey<String> NETTY_CHANNEL_KEY = AttributeKey.valueOf("netty.channel");
 
 
     public static void main(String[] args) throws InterruptedException {
@@ -39,6 +42,7 @@ public class SimpleServer extends AbstractServer{
      */
     private static class SimpleHandler extends SimpleChannelInboundHandler<ByteBuf> {
 
+
         @Override
         protected void channelRead0(ChannelHandlerContext ctx, ByteBuf msg) throws Exception {
             System.out.println("received:" + msg);
@@ -50,6 +54,21 @@ public class SimpleServer extends AbstractServer{
             cause.printStackTrace();
             ctx.close();
         }
+
+        @Override
+        public void channelActive(ChannelHandlerContext ctx) throws Exception {
+            Attribute<String> attr = ctx.attr(NETTY_CHANNEL_KEY);
+            String s = attr.get();
+            if (null == s) {
+                s = attr.setIfAbsent("hahah");
+            } else {
+                System.out.println("attributeMap contains value");
+                System.out.println("this value is " + s);
+            }
+
+            System.out.println("SimpleHandler channelActive");
+            ctx.fireChannelActive();
+        }
     }
 
     /**
@@ -58,8 +77,17 @@ public class SimpleServer extends AbstractServer{
     private static class FirstInboundEventHandler extends ChannelInboundHandlerAdapter{
         @Override
         public void channelActive(ChannelHandlerContext ctx) throws Exception {
-            System.out.println("FirstInboundEventHandler");
-            // 继续调用下个handler
+            System.out.println("FirstInboundEventHandler channelActive");
+
+            Attribute<String> attr = ctx.attr(NETTY_CHANNEL_KEY);
+            String s = attr.get();
+            if (null == s) {
+                s = attr.setIfAbsent("FirstInboundEventHandler");
+            } else {
+                System.out.println("attributeMap contains value");
+                System.out.println("this value is " + s);
+            }
+
             ctx.fireChannelActive();
         }
     }
@@ -70,7 +98,18 @@ public class SimpleServer extends AbstractServer{
     private static class SecondInboundEventHandler extends ChannelInboundHandlerAdapter{
         @Override
         public void channelActive(ChannelHandlerContext ctx) throws Exception {
-            System.out.println("SecondInboundEventHandler");
+            System.out.println("SecondInboundEventHandler channelActive");
+            Attribute<String> attr = ctx.attr(NETTY_CHANNEL_KEY);
+            String s = attr.get();
+
+            if (null == s) {
+                s = attr.setIfAbsent("SecondInboundEventHandler");
+            } else {
+                System.out.println("attributeMap contains value");
+                System.out.println("this value is " + s);
+            }
+
+            ctx.fireChannelActive();
         }
     }
 
