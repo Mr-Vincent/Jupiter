@@ -12,6 +12,7 @@ import io.netty.handler.timeout.IdleStateEvent;
 import io.netty.handler.timeout.IdleStateHandler;
 import io.netty.util.CharsetUtil;
 import io.netty.util.ReferenceCountUtil;
+import org.jupiter.example.nettyinpractice.nio.AbstractNioClient;
 
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
@@ -24,7 +25,7 @@ import java.util.concurrent.TimeUnit;
  * @date 2018/04/12
  * Time: 14:24
  */
-public class HeartBeatsClient extends AbstractClient {
+public class HeartBeatsClient extends AbstractNioClient {
     @Override
     protected ChannelHandler[] addHandlers() {
         return new ChannelHandler[]{

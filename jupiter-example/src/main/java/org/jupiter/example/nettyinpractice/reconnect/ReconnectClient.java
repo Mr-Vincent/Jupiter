@@ -10,7 +10,7 @@ import io.netty.handler.codec.string.StringEncoder;
 import io.netty.handler.timeout.IdleStateHandler;
 import io.netty.util.HashedWheelTimer;
 import io.netty.util.ReferenceCountUtil;
-import org.jupiter.example.nettyinpractice.AbstractClient;
+import org.jupiter.example.nettyinpractice.nio.AbstractNioClient;
 
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
@@ -23,7 +23,7 @@ import java.util.concurrent.TimeUnit;
  * @date 2018/04/12
  * Time: 16:15
  */
-public class ReconnectClient extends AbstractClient{
+public class ReconnectClient extends AbstractNioClient {
 
     private Bootstrap bootstrap;
 

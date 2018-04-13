@@ -12,6 +12,7 @@ import io.netty.handler.timeout.IdleStateEvent;
 import io.netty.handler.timeout.IdleStateHandler;
 import io.netty.util.CharsetUtil;
 import io.netty.util.ReferenceCountUtil;
+import org.jupiter.example.nettyinpractice.nio.AbstractNioServer;
 
 import java.util.concurrent.TimeUnit;
 
@@ -23,7 +24,7 @@ import java.util.concurrent.TimeUnit;
  * @date 2018/04/12
  * Time: 13:50
  */
-public class HeartBeatsServer extends AbstractServer{
+public class HeartBeatsServer extends AbstractNioServer {
     @Override
     protected ChannelHandler[] addHandlers() {
         return new ChannelHandler[]{
@@ -71,8 +72,8 @@ public class HeartBeatsServer extends AbstractServer{
 
             // 判断是否是客户端的心跳 是就返回一个响应
             String message = (String) msg;
-            System.out.println("这是心跳💓信息" + message);
             if (message.equals("beats")) {
+                System.out.println("这是心跳💓信息 ：" + message);
                 ctx.channel().writeAndFlush(HEARTBEATS.duplicate());
             }
             ReferenceCountUtil.release(msg);

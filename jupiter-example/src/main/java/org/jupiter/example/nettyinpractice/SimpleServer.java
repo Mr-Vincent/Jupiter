@@ -7,6 +7,7 @@ import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.util.Attribute;
 import io.netty.util.AttributeKey;
+import org.jupiter.example.nettyinpractice.nio.AbstractNioServer;
 
 
 /**
@@ -17,7 +18,7 @@ import io.netty.util.AttributeKey;
  * @date 2018/04/12
  * Time: 11:21
  */
-public class SimpleServer extends AbstractServer{
+public class SimpleServer extends AbstractNioServer {
 
     private static final AttributeKey<String> NETTY_CHANNEL_KEY = AttributeKey.valueOf("netty.channel");
 

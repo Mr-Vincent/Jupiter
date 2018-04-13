@@ -1,12 +1,11 @@
 package org.jupiter.example.nettyinpractice.counter;
 
-import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.util.Attribute;
 import io.netty.util.AttributeKey;
-import org.jupiter.example.nettyinpractice.AbstractServer;
+import org.jupiter.example.nettyinpractice.nio.AbstractNioServer;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,7 +26,7 @@ import java.util.List;
  * @date 2018/04/13
  * Time: 10:24
  */
-public class CounterServer extends AbstractServer {
+public class CounterServer extends AbstractNioServer {
 
     private static final AttributeKey<Integer> COUNTER = AttributeKey.valueOf("counter");
 

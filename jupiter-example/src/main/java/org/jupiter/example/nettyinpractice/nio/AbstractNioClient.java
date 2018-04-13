@@ -1,4 +1,4 @@
-package org.jupiter.example.nettyinpractice;
+package org.jupiter.example.nettyinpractice.nio;
 
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
@@ -16,7 +16,7 @@ import io.netty.handler.logging.LoggingHandler;
  * @date 2018/04/12
  * Time: 14:19
  */
-public abstract class AbstractClient {
+public abstract class AbstractNioClient {
 
     protected abstract ChannelHandler[] addHandlers();
 
