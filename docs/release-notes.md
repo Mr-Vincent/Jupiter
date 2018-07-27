@@ -1,6 +1,17 @@
 Jupiter release notes
 ------------------------
-### 20180-4-13: version 1.2.21
+### 2018-07-13: version 1.2.23
+
+- Bug fix: [LowCopyProtocolEncoder throw NPE](https://github.com/fengjiachun/Jupiter/issues/67)
+
+### 2018-07-01: version 1.2.22
+
+- [增加针对Linux平台的一些TCP参数](https://github.com/fengjiachun/Jupiter/issues/66)
+- [Unix域套接字支持](https://en.wikipedia.org/wiki/Unix_domain_socket)
+- DefaultInvokeFuture#roundFutures初始容量配置, 避免频繁扩容
+- [DefaultInvokeFuture#TimeoutScanner优化](https://github.com/fengjiachun/Jupiter/issues/62)
+
+### 2018-04-13: version 1.2.21
 
 - 个别代码重新整理
 

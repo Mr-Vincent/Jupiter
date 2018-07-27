@@ -29,6 +29,7 @@ import org.jupiter.rpc.consumer.future.InvokeFutureContext;
 import org.jupiter.rpc.load.balance.LoadBalancerType;
 import org.jupiter.serialization.SerializerType;
 import org.jupiter.transport.UnresolvedAddress;
+import org.jupiter.transport.UnresolvedSocketAddress;
 import org.jupiter.transport.netty.JNettyTcpConnector;
 
 import java.util.List;
@@ -92,7 +93,7 @@ public class BenchmarkClient {
 
         UnresolvedAddress[] addresses = new UnresolvedAddress[processors];
         for (int i = 0; i < processors; i++) {
-            addresses[i] = new UnresolvedAddress("127.0.0.1", 18099);
+            addresses[i] = new UnresolvedSocketAddress("127.0.0.1", 18099);
             client.connector().connect(addresses[i]);
         }
 

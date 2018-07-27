@@ -34,6 +34,7 @@ public interface Transporter {
      * 传输层协议.
      */
     enum Protocol {
-        TCP
+        TCP,
+        DOMAIN  // Unix domain socket
     }
 }
