@@ -13,11 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.jupiter.transport.processor;
 
-import org.jupiter.transport.payload.JResponsePayload;
 import org.jupiter.transport.channel.JChannel;
+import org.jupiter.transport.payload.JResponsePayload;
 
 /**
  * Consumer's processor.

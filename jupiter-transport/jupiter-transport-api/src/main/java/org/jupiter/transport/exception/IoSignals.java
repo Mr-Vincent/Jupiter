@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.jupiter.transport.exception;
 
 import org.jupiter.common.util.Signal;
@@ -28,7 +27,6 @@ import org.jupiter.common.util.Signal;
  *
  * @author jiachun.fjc
  */
-@SuppressWarnings("all")
 public class IoSignals {
 
     /** 错误的MAGIC */

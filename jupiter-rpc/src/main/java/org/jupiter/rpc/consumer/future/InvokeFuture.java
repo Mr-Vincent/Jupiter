@@ -13,8 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.jupiter.rpc.consumer.future;
+
+import java.util.concurrent.CompletionStage;
 
 /**
  * jupiter
@@ -22,7 +23,7 @@ package org.jupiter.rpc.consumer.future;
  *
  * @author jiachun.fjc
  */
-public interface InvokeFuture<V> extends ListenableFuture<V> {
+public interface InvokeFuture<V> extends CompletionStage<V> {
 
     Class<V> returnType();
 

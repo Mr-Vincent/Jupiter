@@ -23,7 +23,7 @@
     <artifactId>jupiter</artifactId>
     <groupId>org.jupiter-rpc</groupId>
     <packaging>pom</packaging>
-    <version>1.2.23</version>
+    <version>1.3.1</version>
 
     <name>Jupiter</name>
     <description>Jupiter is a distributed RPC framework.</description>
@@ -50,13 +50,13 @@
     </modules>
 
     <properties>
-        <netty.version>4.1.19.Final</netty.version>
+        <netty.version>4.1.27.Final</netty.version>
         <jmh.version>1.20</jmh.version>
         <hessian.version>4.0.38</hessian.version>
         <kryo.version>2.23.0</kryo.version>
         <protostuff.version>1.6.0</protostuff.version>
         <asm.version>6.0</asm.version>
-        <bytebuddy.version>1.7.9</bytebuddy.version>
+        <bytebuddy.version>1.9.10</bytebuddy.version>
         <disruptor.version>3.3.7</disruptor.version>
         <metrics.version>4.0.2</metrics.version>
         <affinity.version>3.1.7</affinity.version>
@@ -64,10 +64,11 @@
         <junit.version>4.12</junit.version>
         <hamcrest.version>1.3</hamcrest.version>
         <curator.version>2.9.1</curator.version>
-        <zookeeper.version>3.4.6</zookeeper.version>
+        <zookeeper.version>3.4.14</zookeeper.version>
         <opentracing.version>0.31.0</opentracing.version>
         <spring-framework.version>4.3.0.RELEASE</spring-framework.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <main.user.dir>${user.dir}</main.user.dir>
     </properties>
 
     <dependencyManagement>
@@ -386,8 +387,54 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.1</version>
                 <configuration>
-                    <source>1.7</source>
-                    <target>1.7</target>
+                    <source>1.8</source>
+                    <target>1.8</target>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>com.mycila</groupId>
+                <artifactId>license-maven-plugin</artifactId>
+                <version>3.0</version>
+                <executions>
+                    <execution>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>remove</goal>
+                            <goal>format</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <quiet>true</quiet>
+                    <header>${main.user.dir}/HEADER</header>
+                    <includes>
+                        <include>**/src/main/java/**</include>
+                        <include>**/src/test/java/**</include>
+                    </includes>
+                    <excludes>
+                        <exclude>**/AbstractEntry.java</exclude>
+                        <exclude>**/ConcurrentAutoTable.java</exclude>
+                        <exclude>**/NonBlockingHashMap.java</exclude>
+                        <exclude>**/NonBlockingHashMapLong.java</exclude>
+                        <exclude>**/ByteObjectMap.java</exclude>
+                        <exclude>**/ByteObjectHashMap.java</exclude>
+                        <exclude>**/IntObjectMap.java</exclude>
+                        <exclude>**/IntObjectHashMap.java</exclude>
+                        <exclude>**/LongObjectMap.java</exclude>
+                        <exclude>**/LongObjectHashMap.java</exclude>
+                        <exclude>**/Recycler.java</exclude>
+                        <exclude>**/timer/*.java</exclude>
+                        <exclude>**/logging/*.java</exclude>
+                        <exclude>**/queues/*.java</exclude>
+                        <exclude>**/Constant.java</exclude>
+                        <exclude>**/AbstractConstant.java</exclude>
+                        <exclude>**/ConstantPool.java</exclude>
+                        <exclude>**/IdStrategy.java</exclude>
+                    </excludes>
+                    <strictCheck>true</strictCheck>
+                    <mapping>
+                        <java>SLASHSTAR_STYLE</java>
+                    </mapping>
                 </configuration>
             </plugin>
         </plugins>
@@ -426,10 +473,13 @@
                         <version>2.9.1</version>
                         <executions>
                             <execution>
-                                <phase>package</phase>
+                                <id>attach-javadocs</id>
                                 <goals>
                                     <goal>jar</goal>
                                 </goals>
+                                <configuration>
+                                    <additionalparam>-Xdoclint:none</additionalparam>
+                                </configuration>
                             </execution>
                         </executions>
                     </plugin>

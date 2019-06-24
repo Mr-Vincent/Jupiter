@@ -13,19 +13,36 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.jupiter.common.concurrent.disruptor;
 
-import com.lmax.disruptor.*;
-import com.lmax.disruptor.dsl.Disruptor;
-import com.lmax.disruptor.dsl.ProducerType;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.RejectedExecutionHandler;
+import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+
 import org.jupiter.common.concurrent.NamedThreadFactory;
 import org.jupiter.common.concurrent.RejectedTaskPolicyWithReport;
 import org.jupiter.common.util.Pow2;
+import org.jupiter.common.util.Requires;
 
-import java.util.concurrent.*;
-
-import static org.jupiter.common.util.Preconditions.checkArgument;
+import com.lmax.disruptor.BlockingWaitStrategy;
+import com.lmax.disruptor.BusySpinWaitStrategy;
+import com.lmax.disruptor.EventFactory;
+import com.lmax.disruptor.InsufficientCapacityException;
+import com.lmax.disruptor.LiteBlockingWaitStrategy;
+import com.lmax.disruptor.LiteTimeoutBlockingWaitStrategy;
+import com.lmax.disruptor.PhasedBackoffWaitStrategy;
+import com.lmax.disruptor.RingBuffer;
+import com.lmax.disruptor.SleepingWaitStrategy;
+import com.lmax.disruptor.TimeoutBlockingWaitStrategy;
+import com.lmax.disruptor.WaitStrategy;
+import com.lmax.disruptor.YieldingWaitStrategy;
+import com.lmax.disruptor.dsl.Disruptor;
+import com.lmax.disruptor.dsl.ProducerType;
 
 /**
  * 可选择的等待策略, 越往下越极端:
@@ -68,13 +85,7 @@ import static org.jupiter.common.util.Preconditions.checkArgument;
  */
 public class TaskDispatcher implements Dispatcher<Runnable>, Executor {
 
-    private static final EventFactory<MessageEvent<Runnable>> eventFactory = new EventFactory<MessageEvent<Runnable>>() {
-
-        @Override
-        public MessageEvent<Runnable> newInstance() {
-            return new MessageEvent<>();
-        }
-    };
+    private static final EventFactory<MessageEvent<Runnable>> eventFactory = MessageEvent::new;
 
     private final Disruptor<MessageEvent<Runnable>> disruptor;
     private final ExecutorService reserveExecutor;
@@ -90,7 +101,7 @@ public class TaskDispatcher implements Dispatcher<Runnable>, Executor {
                           WaitStrategyType waitStrategyType,
                           String dumpPrefixName) {
 
-        checkArgument(bufSize > 0, "bufSize must be larger than 0");
+        Requires.requireTrue(bufSize > 0, "bufSize must be larger than 0");
         if (!Pow2.isPowerOfTwo(bufSize)) {
             bufSize = Pow2.roundToPowerOfTwo(bufSize);
         }
@@ -110,7 +121,7 @@ public class TaskDispatcher implements Dispatcher<Runnable>, Executor {
                     numReserveWorkers,
                     60L,
                     TimeUnit.SECONDS,
-                    new SynchronousQueue<Runnable>(),
+                    new SynchronousQueue<>(),
                     new NamedThreadFactory(name),
                     handler);
         } else {

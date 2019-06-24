@@ -13,8 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.jupiter.tracing;
+
+import java.util.Iterator;
+import java.util.Map;
 
 import io.opentracing.Span;
 import io.opentracing.SpanContext;
@@ -23,15 +25,13 @@ import io.opentracing.noop.NoopTracer;
 import io.opentracing.propagation.Format;
 import io.opentracing.propagation.TextMap;
 import io.opentracing.propagation.TextMapExtractAdapter;
+
 import org.jupiter.common.util.SpiMetadata;
 import org.jupiter.rpc.JFilter;
 import org.jupiter.rpc.JFilterChain;
 import org.jupiter.rpc.JFilterContext;
 import org.jupiter.rpc.JRequest;
 import org.jupiter.rpc.model.metadata.MessageWrapper;
-
-import java.util.Iterator;
-import java.util.Map;
 
 /**
  * This filter enables distributed tracing in Jupiter clients and servers via
@@ -77,8 +77,6 @@ public class OpenTracingFilter implements JFilter {
         Span span = extractContext(tracer, request);
         try {
             OpenTracingContext.setActiveSpan(span);
-            span.setTag("jupiter_traceId", request.getTraceId());
-
             // next filter
             next.doFilter(request, filterCtx);
 
@@ -102,7 +100,6 @@ public class OpenTracingFilter implements JFilter {
 
         Span span = spanBuilder.start();
         try {
-            span.setTag("jupiter_traceId", request.getTraceId());
             injectContext(tracer, span, request);
 
             // next filter

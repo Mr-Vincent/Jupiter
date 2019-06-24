@@ -13,13 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.jupiter.serialization.kryo.io;
+
+import org.jupiter.common.util.internal.InternalThreadLocal;
+import org.jupiter.serialization.io.OutputBuf;
 
 import com.esotericsoftware.kryo.io.FastOutput;
 import com.esotericsoftware.kryo.io.Output;
-import org.jupiter.common.util.internal.InternalThreadLocal;
-import org.jupiter.serialization.io.OutputBuf;
 
 import static org.jupiter.serialization.Serializer.DEFAULT_BUF_SIZE;
 import static org.jupiter.serialization.Serializer.MAX_CACHED_BUF_SIZE;

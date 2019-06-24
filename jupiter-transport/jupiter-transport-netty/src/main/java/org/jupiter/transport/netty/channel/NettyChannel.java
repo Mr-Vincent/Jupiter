@@ -13,27 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.jupiter.transport.netty.channel;
+
+import java.io.OutputStream;
+import java.net.SocketAddress;
+import java.nio.ByteBuffer;
+import java.util.Queue;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.buffer.ByteBufOutputStream;
 import io.netty.channel.Channel;
-import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
+import io.netty.channel.EventLoop;
 import io.netty.util.Attribute;
 import io.netty.util.AttributeKey;
+import io.netty.util.internal.PlatformDependent;
+
 import org.jupiter.serialization.io.OutputBuf;
 import org.jupiter.transport.JProtocolHeader;
 import org.jupiter.transport.channel.JChannel;
 import org.jupiter.transport.channel.JFutureListener;
 import org.jupiter.transport.netty.alloc.AdaptiveOutputBufAllocator;
 import org.jupiter.transport.netty.handler.connector.ConnectionWatchdog;
-
-import java.io.OutputStream;
-import java.net.SocketAddress;
-import java.nio.ByteBuffer;
 
 /**
  * 对Netty {@link Channel} 的包装, 通过静态方法 {@link #attachChannel(Channel)} 获取一个实例,
@@ -66,6 +68,9 @@ public class NettyChannel implements JChannel {
 
     private final Channel channel;
     private final AdaptiveOutputBufAllocator.Handle allocHandle = AdaptiveOutputBufAllocator.DEFAULT.newHandle();
+
+    private final Queue<Runnable> taskQueue = PlatformDependent.newMpscQueue(1024);
+    private final Runnable runAllTasks = this::runAllTasks;
 
     private NettyChannel(Channel channel) {
         this.channel = channel;
@@ -130,15 +135,11 @@ public class NettyChannel implements JChannel {
     @Override
     public JChannel close(final JFutureListener<JChannel> listener) {
         final JChannel jChannel = this;
-        channel.close().addListener(new ChannelFutureListener() {
-
-            @Override
-            public void operationComplete(ChannelFuture future) throws Exception {
-                if (future.isSuccess()) {
-                    listener.operationSuccess(jChannel);
-                } else {
-                    listener.operationFailure(jChannel, future.cause());
-                }
+        channel.close().addListener((ChannelFutureListener) future -> {
+            if (future.isSuccess()) {
+                listener.operationSuccess(jChannel);
+            } else {
+                listener.operationFailure(jChannel, future.cause());
             }
         });
         return jChannel;
@@ -154,18 +155,46 @@ public class NettyChannel implements JChannel {
     public JChannel write(Object msg, final JFutureListener<JChannel> listener) {
         final JChannel jChannel = this;
         channel.writeAndFlush(msg)
-                .addListener(new ChannelFutureListener() {
-
-                    @Override
-                    public void operationComplete(ChannelFuture future) throws Exception {
-                        if (future.isSuccess()) {
-                            listener.operationSuccess(jChannel);
-                        } else {
-                            listener.operationFailure(jChannel, future.cause());
-                        }
+                .addListener((ChannelFutureListener) future -> {
+                    if (future.isSuccess()) {
+                        listener.operationSuccess(jChannel);
+                    } else {
+                        listener.operationFailure(jChannel, future.cause());
                     }
                 });
         return jChannel;
+    }
+
+    @Override
+    public void addTask(Runnable task) {
+        EventLoop eventLoop = channel.eventLoop();
+
+        while (!taskQueue.offer(task)) {
+            if (eventLoop.inEventLoop()) {
+                runAllTasks.run();
+            } else {
+                // TODO await?
+                eventLoop.execute(runAllTasks);
+            }
+        }
+
+        if (!taskQueue.isEmpty()) {
+            eventLoop.execute(runAllTasks);
+        }
+    }
+
+    private void runAllTasks() {
+        if (taskQueue.isEmpty()) {
+            return;
+        }
+
+        for (;;) {
+            Runnable task = taskQueue.poll();
+            if (task == null) {
+                return;
+            }
+            task.run();
+        }
     }
 
     @Override

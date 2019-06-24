@@ -13,15 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.jupiter.common.util;
-
-import org.junit.Test;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Map;
+
+import org.junit.Test;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
@@ -47,11 +46,7 @@ public class ReflectsTest {
         Map<String, List<Class<?>[]>> methodsParameterTypes = Maps.newHashMap();
         for (Method method : Service.class.getMethods()) {
             String methodName = method.getName();
-            List<Class<?>[]> list = methodsParameterTypes.get(methodName);
-            if (list == null) {
-                list = Lists.newArrayList();
-                methodsParameterTypes.put(methodName, list);
-            }
+            List<Class<?>[]> list = methodsParameterTypes.computeIfAbsent(methodName, k -> Lists.newArrayList());
             list.add(method.getParameterTypes());
         }
 

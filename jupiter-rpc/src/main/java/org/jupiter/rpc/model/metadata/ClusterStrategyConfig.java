@@ -13,12 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.jupiter.rpc.model.metadata;
 
-import org.jupiter.rpc.consumer.cluster.ClusterInvoker;
-
 import java.io.Serializable;
+
+import org.jupiter.rpc.consumer.cluster.ClusterInvoker;
 
 /**
  * Jupiter

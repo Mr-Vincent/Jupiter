@@ -13,16 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.jupiter.rpc.load.balance;
+
+import java.util.List;
 
 import org.jupiter.common.util.SystemClock;
 import org.jupiter.transport.Directory;
 import org.jupiter.transport.UnresolvedAddress;
 import org.jupiter.transport.channel.JChannel;
 import org.jupiter.transport.channel.JChannelGroup;
-
-import java.util.List;
 
 /**
  * jupiter

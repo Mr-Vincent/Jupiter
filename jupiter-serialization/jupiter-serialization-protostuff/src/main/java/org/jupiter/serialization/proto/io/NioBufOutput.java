@@ -13,24 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.jupiter.serialization.proto.io;
+
+import java.io.IOException;
+import java.nio.ByteBuffer;
 
 import io.protostuff.ByteString;
 import io.protostuff.IntSerializer;
 import io.protostuff.Output;
 import io.protostuff.Schema;
-import org.jupiter.common.util.internal.UnsafeReferenceFieldUpdater;
-import org.jupiter.common.util.internal.UnsafeUpdater;
-import org.jupiter.common.util.internal.UnsafeUtf8Util;
-import org.jupiter.serialization.io.OutputBuf;
+import io.protostuff.StringSerializer;
+import io.protostuff.ZeroByteStringHelper;
 
-import java.io.IOException;
-import java.nio.ByteBuffer;
+import org.jupiter.common.util.internal.UnsafeUtf8Util;
+import org.jupiter.common.util.internal.UnsafeUtil;
+import org.jupiter.serialization.io.OutputBuf;
 
 import static io.protostuff.ProtobufOutput.encodeZigZag32;
 import static io.protostuff.ProtobufOutput.encodeZigZag64;
-import static io.protostuff.WireFormat.*;
+import static io.protostuff.WireFormat.WIRETYPE_END_GROUP;
+import static io.protostuff.WireFormat.WIRETYPE_FIXED32;
+import static io.protostuff.WireFormat.WIRETYPE_FIXED64;
+import static io.protostuff.WireFormat.WIRETYPE_LENGTH_DELIMITED;
+import static io.protostuff.WireFormat.WIRETYPE_START_GROUP;
+import static io.protostuff.WireFormat.WIRETYPE_VARINT;
+import static io.protostuff.WireFormat.makeTag;
 
 /**
  * jupiter
@@ -39,9 +46,6 @@ import static io.protostuff.WireFormat.*;
  * @author jiachun.fjc
  */
 class NioBufOutput implements Output {
-
-    private static final UnsafeReferenceFieldUpdater<ByteString, byte[]> byteStringBytesGetter =
-            UnsafeUpdater.newReferenceFieldUpdater(ByteString.class, "bytes");
 
     protected final OutputBuf outputBuf;
     protected final int maxCapacity;
@@ -145,6 +149,11 @@ class NioBufOutput implements Output {
 
     @Override
     public void writeString(int fieldNumber, CharSequence value, boolean repeated) throws IOException {
+        if (!UnsafeUtil.hasUnsafe()) {
+            writeByteArray(fieldNumber, StringSerializer.STRING.ser(value.toString()), repeated);
+            return;
+        }
+
         writeVarInt32(makeTag(fieldNumber, WIRETYPE_LENGTH_DELIMITED));
 
         // UTF-8 byte length of the string is at least its UTF-16 code unit length (value.length()),
@@ -189,8 +198,7 @@ class NioBufOutput implements Output {
                 UnsafeUtf8Util.encodeUtf8Direct(value, nioBuffer);
             } else {
                 int pos = nioBuffer.position();
-                UnsafeUtf8Util.encodeUtf8(value, nioBuffer.array(),
-                        nioBuffer.arrayOffset() + pos, nioBuffer.remaining());
+                UnsafeUtf8Util.encodeUtf8(value, nioBuffer.array(), nioBuffer.arrayOffset() + pos, nioBuffer.remaining());
                 nioBuffer.position(pos + length);
             }
         }
@@ -198,7 +206,7 @@ class NioBufOutput implements Output {
 
     @Override
     public void writeBytes(int fieldNumber, ByteString value, boolean repeated) throws IOException {
-        writeByteArray(fieldNumber, byteStringBytesGetter.get(value), repeated);
+        writeByteArray(fieldNumber, ZeroByteStringHelper.getBytes(value), repeated);
     }
 
     @Override

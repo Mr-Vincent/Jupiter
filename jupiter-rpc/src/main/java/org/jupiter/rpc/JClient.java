@@ -13,16 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.jupiter.rpc;
 
-import org.jupiter.registry.*;
+import java.util.Collection;
+
+import org.jupiter.registry.NotifyListener;
+import org.jupiter.registry.OfflineListener;
+import org.jupiter.registry.RegisterMeta;
+import org.jupiter.registry.Registry;
+import org.jupiter.registry.RegistryService;
 import org.jupiter.transport.Directory;
 import org.jupiter.transport.JConnection;
 import org.jupiter.transport.JConnector;
 import org.jupiter.transport.UnresolvedAddress;
-
-import java.util.Collection;
 
 /**
  * The jupiter rpc client.
@@ -57,7 +60,7 @@ public interface JClient extends Registry {
     RegistryService registryService();
 
     /**
-     * 从本地容器查找服务信息.
+     * 查找服务信息.
      */
     Collection<RegisterMeta> lookup(Directory directory);
 

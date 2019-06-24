@@ -13,18 +13,34 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.jupiter.serialization.proto.io;
 
-import io.protostuff.*;
-import org.jupiter.common.util.ThrowUtil;
-import org.jupiter.common.util.internal.UnsafeUtf8Util;
-
 import java.io.IOException;
-import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
 
-import static io.protostuff.WireFormat.*;
+import io.protostuff.ByteBufferInput;
+import io.protostuff.ByteString;
+import io.protostuff.Input;
+import io.protostuff.Output;
+import io.protostuff.ProtobufException;
+import io.protostuff.Schema;
+import io.protostuff.StringSerializer;
+import io.protostuff.UninitializedMessageException;
+import io.protostuff.ZeroByteStringHelper;
+
+import org.jupiter.common.util.internal.UnsafeUtf8Util;
+import org.jupiter.common.util.internal.UnsafeUtil;
+
+import static io.protostuff.WireFormat.WIRETYPE_END_GROUP;
+import static io.protostuff.WireFormat.WIRETYPE_FIXED32;
+import static io.protostuff.WireFormat.WIRETYPE_FIXED64;
+import static io.protostuff.WireFormat.WIRETYPE_LENGTH_DELIMITED;
+import static io.protostuff.WireFormat.WIRETYPE_START_GROUP;
+import static io.protostuff.WireFormat.WIRETYPE_TAIL_DELIMITER;
+import static io.protostuff.WireFormat.WIRETYPE_VARINT;
+import static io.protostuff.WireFormat.getTagFieldNumber;
+import static io.protostuff.WireFormat.getTagWireType;
+import static io.protostuff.WireFormat.makeTag;
 
 /**
  * jupiter
@@ -36,8 +52,6 @@ class NioBufInput implements Input {
 
     static final int TAG_TYPE_BITS = 3;
     static final int TAG_TYPE_MASK = (1 << TAG_TYPE_BITS) - 1;
-
-    static final Method byteStringWrapMethod;
 
     private final ByteBuffer nioBuffer;
     private int lastTag = 0;
@@ -377,23 +391,28 @@ class NioBufInput implements Input {
         final int position = nioBuffer.position();
         String result;
         if (nioBuffer.hasArray()) {
-            result = UnsafeUtf8Util.decodeUtf8(nioBuffer.array(), nioBuffer.arrayOffset() + position, length);
+            if (UnsafeUtil.hasUnsafe()) {
+                result = UnsafeUtf8Util.decodeUtf8(nioBuffer.array(), nioBuffer.arrayOffset() + position, length);
+            } else {
+                result = StringSerializer.STRING.deser(nioBuffer.array(), nioBuffer.arrayOffset() + position, length);
+            }
+            nioBuffer.position(position + length);
         } else {
-            result = UnsafeUtf8Util.decodeUtf8Direct(nioBuffer, position, length);
+            if (UnsafeUtil.hasUnsafe()) {
+                result = UnsafeUtf8Util.decodeUtf8Direct(nioBuffer, position, length);
+                nioBuffer.position(position + length);
+            } else {
+                byte[] tmp = new byte[length];
+                nioBuffer.get(tmp);
+                return StringSerializer.STRING.deser(tmp);
+            }
         }
-        nioBuffer.position(position + length);
         return result;
     }
 
-    @SuppressWarnings("all")
     @Override
     public ByteString readBytes() throws IOException {
-        try {
-            return (ByteString) byteStringWrapMethod.invoke(null, readByteArray());
-        } catch (Exception e) {
-            ThrowUtil.throwException(e);
-        }
-        return null; // never get here
+        return ZeroByteStringHelper.wrap(readByteArray());
     }
 
     @Override
@@ -604,14 +623,5 @@ class NioBufInput implements Input {
     @Override
     public ByteBuffer readByteBuffer() throws IOException {
         return ByteBuffer.wrap(readByteArray());
-    }
-
-    static {
-        try {
-            byteStringWrapMethod = ByteString.class.getDeclaredMethod("wrap", byte[].class);
-            byteStringWrapMethod.setAccessible(true);
-        } catch (NoSuchMethodException e) {
-            throw new Error(e);
-        }
     }
 }

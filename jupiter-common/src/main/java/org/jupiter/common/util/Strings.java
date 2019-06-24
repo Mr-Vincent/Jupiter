@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.jupiter.common.util;
 
 import java.util.ArrayList;
@@ -146,7 +145,7 @@ public final class Strings {
         if (match || preserveAllTokens) {
             list.add(str.substring(start, i));
         }
-        return list.toArray(new String[list.size()]);
+        return list.toArray(new String[0]);
     }
 
     private static final String[] EMPTY_STRING_ARRAY = new String[0];

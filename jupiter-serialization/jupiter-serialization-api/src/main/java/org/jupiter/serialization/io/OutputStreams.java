@@ -13,14 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.jupiter.serialization.io;
 
-import org.jupiter.common.util.internal.InternalThreadLocal;
-import org.jupiter.common.util.internal.UnsafeReferenceFieldUpdater;
-import org.jupiter.common.util.internal.UnsafeUpdater;
-
 import java.io.ByteArrayOutputStream;
+
+import org.jupiter.common.util.internal.InternalThreadLocal;
+import org.jupiter.common.util.internal.ReferenceFieldUpdater;
+import org.jupiter.common.util.internal.Updaters;
 
 import static org.jupiter.serialization.Serializer.DEFAULT_BUF_SIZE;
 import static org.jupiter.serialization.Serializer.MAX_CACHED_BUF_SIZE;
@@ -33,8 +32,8 @@ import static org.jupiter.serialization.Serializer.MAX_CACHED_BUF_SIZE;
  */
 public final class OutputStreams {
 
-    private static final UnsafeReferenceFieldUpdater<ByteArrayOutputStream, byte[]> bufUpdater =
-            UnsafeUpdater.newReferenceFieldUpdater(ByteArrayOutputStream.class, "buf");
+    private static final ReferenceFieldUpdater<ByteArrayOutputStream, byte[]> bufUpdater =
+            Updaters.newReferenceFieldUpdater(ByteArrayOutputStream.class, "buf");
 
     // 复用 ByteArrayOutputStream 中的 byte[]
     private static final InternalThreadLocal<ByteArrayOutputStream> bufThreadLocal = new InternalThreadLocal<ByteArrayOutputStream>() {
@@ -53,7 +52,6 @@ public final class OutputStreams {
         buf.reset(); // for reuse
 
         // 防止hold过大的内存块一直不释放
-        assert bufUpdater != null;
         if (bufUpdater.get(buf).length > MAX_CACHED_BUF_SIZE) {
             bufUpdater.set(buf, new byte[DEFAULT_BUF_SIZE]);
         }

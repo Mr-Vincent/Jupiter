@@ -13,17 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.jupiter.common.util;
 
+import java.util.concurrent.TimeUnit;
+
 import org.jupiter.common.util.internal.UnsafeUtil;
-import org.openjdk.jmh.annotations.*;
+import org.openjdk.jmh.annotations.Benchmark;
+import org.openjdk.jmh.annotations.BenchmarkMode;
+import org.openjdk.jmh.annotations.Fork;
+import org.openjdk.jmh.annotations.Measurement;
+import org.openjdk.jmh.annotations.Mode;
+import org.openjdk.jmh.annotations.OutputTimeUnit;
+import org.openjdk.jmh.annotations.Warmup;
 import org.openjdk.jmh.runner.Runner;
 import org.openjdk.jmh.runner.RunnerException;
 import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
-
-import java.util.concurrent.TimeUnit;
 
 /**
  * jupiter
@@ -59,7 +64,7 @@ public class GetFieldValueBenchmark {
     @Benchmark
     public void unsafeGet() {
         // RandomLoadBalancer中有类似代码
-        Object[] array = (Object[]) UnsafeUtil.getUnsafe().getObjectVolatile(FIELD_TEST, FieldTest.OFFSET);
+        Object[] array = (Object[]) UnsafeUtil.getUnsafeAccessor().getUnsafe().getObjectVolatile(FIELD_TEST, FieldTest.OFFSET);
         if ((int) array[0] != 1) {
             System.out.println(1);
         }
@@ -78,13 +83,12 @@ class FieldTest {
     static {
         long offsetTmp;
         try {
-            offsetTmp = UnsafeUtil.getUnsafe().objectFieldOffset(Reflects.getField(FieldTest.class, "array"));
+            offsetTmp = UnsafeUtil.getUnsafeAccessor().getUnsafe().objectFieldOffset(Reflects.getField(FieldTest.class, "array"));
         } catch (NoSuchFieldException e) {
             offsetTmp = 0;
         }
         OFFSET = offsetTmp;
     }
 
-    @SuppressWarnings("MismatchedReadAndWriteOfArray")
     volatile Object[] array = new Object[] { 1, 2 };
 }

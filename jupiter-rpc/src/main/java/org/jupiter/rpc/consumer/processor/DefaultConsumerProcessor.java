@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.jupiter.rpc.consumer.processor;
 
 import org.jupiter.rpc.JResponse;
@@ -47,7 +46,7 @@ public class DefaultConsumerProcessor implements ConsumerProcessor {
     public void handleResponse(JChannel channel, JResponsePayload responsePayload) throws Exception {
         MessageTask task = new MessageTask(channel, new JResponse(responsePayload));
         if (executor == null) {
-            task.run();
+            channel.addTask(task);
         } else {
             executor.execute(task);
         }

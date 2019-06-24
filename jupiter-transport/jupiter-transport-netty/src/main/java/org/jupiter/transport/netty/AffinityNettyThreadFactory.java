@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.jupiter.transport.netty;
 
 import io.netty.util.concurrent.FastThreadLocal;
 import io.netty.util.concurrent.FastThreadLocalThread;
 import net.openhft.affinity.AffinityStrategy;
+
 import org.jupiter.common.concurrent.AffinityNamedThreadFactory;
 
 /**

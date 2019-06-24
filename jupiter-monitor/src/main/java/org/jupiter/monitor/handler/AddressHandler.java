@@ -13,15 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.jupiter.monitor.handler;
 
+import java.util.List;
+
 import io.netty.channel.Channel;
+
 import org.jupiter.common.util.JConstants;
 import org.jupiter.monitor.Command;
 import org.jupiter.registry.RegistryMonitor;
-
-import java.util.List;
 
 /**
  * jupiter
@@ -62,7 +62,7 @@ public class AddressHandler extends ChildCommandHandler<RegistryHandler> {
             childGrep = command.parseChild(args[3]);
         }
         for (String a : addresses) {
-            if (childGrep != null && childGrep == Command.ChildCommand.GREP) {
+            if (childGrep == Command.ChildCommand.GREP) {
                 if (a.contains(args[4])) {
                     channel.writeAndFlush(a + JConstants.NEWLINE);
                 }

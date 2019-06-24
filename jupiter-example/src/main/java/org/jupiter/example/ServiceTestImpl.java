@@ -13,13 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.jupiter.example;
+
+import java.util.Collections;
 
 import org.jupiter.common.util.Lists;
 import org.jupiter.rpc.ServiceProviderImpl;
-
-import java.util.Collections;
 
 /**
  * jupiter

@@ -13,11 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.jupiter.common.util;
 
-import java.nio.charset.Charset;
-import java.nio.charset.UnsupportedCharsetException;
 import java.util.Formatter;
 
 /**
@@ -32,9 +29,6 @@ public final class JConstants {
 
     /** 换行符 */
     public static final String NEWLINE;
-    /** 字符编码 */
-    public static final String UTF8_CHARSET = "UTF-8";
-    public static final Charset UTF8;
     static {
         String newLine;
         try {
@@ -43,16 +37,14 @@ public final class JConstants {
             newLine = "\n";
         }
         NEWLINE = newLine;
-
-        Charset charset = null;
-        try {
-            charset = Charset.forName(UTF8_CHARSET);
-        } catch (UnsupportedCharsetException ignored) {}
-        UTF8 = charset;
     }
 
-    /** Cpu核心数 */
-    public static final int AVAILABLE_PROCESSORS = Runtime.getRuntime().availableProcessors();
+    /**
+     * 可配置的 available processors. 默认值是 {@link Runtime#availableProcessors()}.
+     * 可以通过设置 system property "jupiter.available_processors" 来覆盖默认值.
+     */
+    public static final int AVAILABLE_PROCESSORS =
+            SystemPropertyUtil.getInt("jupiter.available_processors", Runtime.getRuntime().availableProcessors());
 
     /** 未知应用名称 */
     public static final String UNKNOWN_APP_NAME = "UNKNOWN";
@@ -69,6 +61,12 @@ public final class JConstants {
     /** Client链路write空闲检测, 默认30秒, 30秒没有向链路中写入任何数据时Client会主动向Server发送心跳数据包 */
     public static final int WRITER_IDLE_TIME_SECONDS =
             SystemPropertyUtil.getInt("jupiter.io.writer.idle.time.seconds", 30);
+    /** The number of flushes after which an explicit flush will be done */
+    public static final int EXPLICIT_FLUSH_AFTER_FLUSHES =
+            SystemPropertyUtil.getInt("jupiter.io.explicit.flush.after.flushes", 1024);
+    /** Whether use low copy strategy for serialization */
+    public static final boolean CODEC_LOW_COPY =
+            SystemPropertyUtil.getBoolean("jupiter.io.codec.low_copy", true);
 
     /** Load balancer 默认预热时间 **/
     public static final int DEFAULT_WARM_UP =

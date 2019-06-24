@@ -13,13 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.jupiter.example.round;
 
+import java.util.concurrent.CompletableFuture;
+
 import org.jupiter.common.util.SystemPropertyUtil;
+import org.jupiter.example.AsyncUserService;
 import org.jupiter.example.User;
 import org.jupiter.example.UserService;
 import org.jupiter.rpc.DefaultClient;
+import org.jupiter.rpc.InvokeType;
 import org.jupiter.rpc.JClient;
 import org.jupiter.rpc.consumer.ProxyFactory;
 import org.jupiter.serialization.SerializerType;
@@ -36,7 +39,7 @@ import org.jupiter.transport.netty.JNettyTcpConnector;
 public class SyncJupiterClient {
 
     static {
-        SystemPropertyUtil.setProperty("jupiter.transport.codec.low_copy", "true");
+        SystemPropertyUtil.setProperty("jupiter.io.codec.low_copy", "true");
         SystemPropertyUtil.setProperty("io.netty.allocator.type", "pooled");
 //        SystemPropertyUtil.setProperty("io.netty.noPreferDirect", "true");
     }
@@ -60,10 +63,21 @@ public class SyncJupiterClient {
                 .failoverRetries(5)
                 .newProxyInstance();
 
+        AsyncUserService asyncUserService = ProxyFactory.factory(AsyncUserService.class)
+                .version("1.0.0.daily")
+                .client(client)
+                .invokeType(InvokeType.SYNC)
+                .newProxyInstance();
+
         try {
             for (int i = 0; i < 5; i++) {
                 User user = userService.createUser();
                 System.out.println(user);
+            }
+
+            for (int i = 0; i < 5; i++) {
+                CompletableFuture<User> user = asyncUserService.createUser();
+                System.out.println(user.get());
             }
         } catch (Exception e) {
             e.printStackTrace();

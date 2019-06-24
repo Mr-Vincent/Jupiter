@@ -13,11 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.jupiter.rpc.provider;
 
-import org.jupiter.transport.Directory;
 import org.jupiter.rpc.model.metadata.ServiceWrapper;
+import org.jupiter.transport.Directory;
 
 /**
  * Lookup the service.

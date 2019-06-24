@@ -13,12 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.jupiter.transport.channel;
 
-import org.jupiter.serialization.io.OutputBuf;
-
 import java.net.SocketAddress;
+
+import org.jupiter.serialization.io.OutputBuf;
 
 /**
  * A nexus to a network socket or a component which is capable of I/O
@@ -119,6 +118,11 @@ public interface JChannel {
      * Requests to write a message on the channel.
      */
     JChannel write(Object msg, JFutureListener<JChannel> listener);
+
+    /**
+     * Add a task will execute in the io thread later.
+     */
+    void addTask(Runnable task);
 
     /**
      * Allocate a {@link OutputBuf}.

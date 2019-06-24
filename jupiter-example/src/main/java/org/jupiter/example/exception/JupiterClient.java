@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.jupiter.example.exception;
 
 import org.jupiter.example.ExceptionServiceTest;
@@ -44,13 +43,7 @@ public class JupiterClient {
             throw new ConnectFailedException();
         }
 
-        Runtime.getRuntime().addShutdownHook(new Thread() {
-
-            @Override
-            public void run() {
-                client.shutdownGracefully();
-            }
-        });
+        Runtime.getRuntime().addShutdownHook(new Thread(client::shutdownGracefully));
 
         ExceptionServiceTest service = ProxyFactory.factory(ExceptionServiceTest.class)
                 .version("1.0.0.daily")

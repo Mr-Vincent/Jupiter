@@ -13,12 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.jupiter.common.util.internal;
 
-import sun.misc.Unsafe;
-
 import java.lang.reflect.Field;
+
+import sun.misc.Unsafe;
 
 /**
  * jupiter
@@ -27,12 +26,13 @@ import java.lang.reflect.Field;
  * @author jiachun.fjc
  */
 @SuppressWarnings("unchecked")
-public final class UnsafeReferenceFieldUpdater<U, W> {
+final class UnsafeReferenceFieldUpdater<U, W> implements ReferenceFieldUpdater<U, W> {
+
     private final long offset;
     private final Unsafe unsafe;
 
     UnsafeReferenceFieldUpdater(Unsafe unsafe, Class<? super U> tClass, String fieldName) throws NoSuchFieldException {
-        Field field = tClass.getDeclaredField(fieldName);
+        final Field field = tClass.getDeclaredField(fieldName);
         if (unsafe == null) {
             throw new NullPointerException("unsafe");
         }
@@ -40,10 +40,12 @@ public final class UnsafeReferenceFieldUpdater<U, W> {
         offset = unsafe.objectFieldOffset(field);
     }
 
+    @Override
     public void set(U obj, W newValue) {
         unsafe.putObject(obj, offset, newValue);
     }
 
+    @Override
     public W get(U obj) {
         return (W) unsafe.getObject(obj, offset);
     }

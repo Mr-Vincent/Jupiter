@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.jupiter.example.zookeeper;
 
 import org.jupiter.example.ServiceTest;
@@ -47,13 +46,7 @@ public class JupiterClient {
             throw new ConnectFailedException();
         }
 
-        Runtime.getRuntime().addShutdownHook(new Thread() {
-
-            @Override
-            public void run() {
-                client.shutdownGracefully();
-            }
-        });
+        Runtime.getRuntime().addShutdownHook(new Thread(client::shutdownGracefully));
 
         ServiceTest service = ProxyFactory.factory(ServiceTest.class)
                 .version("1.0.0.daily")

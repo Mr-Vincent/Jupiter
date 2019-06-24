@@ -13,14 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.jupiter.serialization.proto;
+
+import java.io.IOException;
 
 import io.protostuff.Input;
 import io.protostuff.LinkedBuffer;
 import io.protostuff.Output;
 import io.protostuff.Schema;
+import io.protostuff.runtime.IdStrategy;
 import io.protostuff.runtime.RuntimeSchema;
+
+import org.jupiter.common.util.ClassUtil;
 import org.jupiter.common.util.SystemPropertyUtil;
 import org.jupiter.common.util.ThrowUtil;
 import org.jupiter.serialization.Serializer;
@@ -30,8 +34,6 @@ import org.jupiter.serialization.io.OutputBuf;
 import org.jupiter.serialization.proto.io.Inputs;
 import org.jupiter.serialization.proto.io.LinkedBuffers;
 import org.jupiter.serialization.proto.io.Outputs;
-
-import java.io.IOException;
 
 /**
  * Protostuff的序列化/反序列化实现, jupiter中默认的实现.
@@ -44,6 +46,8 @@ import java.io.IOException;
 public class ProtoStuffSerializer extends Serializer {
 
     static {
+        ClassUtil.forClass(IdStrategy.class);
+
         // 详见 io.protostuff.runtime.RuntimeEnv
 
         // If true, the constructor will always be obtained from {@code ReflectionFactory.newConstructorFromSerialization}.

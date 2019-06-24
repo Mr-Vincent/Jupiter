@@ -13,15 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.jupiter.rpc;
-
-import org.jupiter.common.util.*;
-import org.jupiter.registry.*;
-import org.jupiter.rpc.consumer.processor.DefaultConsumerProcessor;
-import org.jupiter.rpc.model.metadata.ServiceMetadata;
-import org.jupiter.transport.*;
-import org.jupiter.transport.channel.JChannelGroup;
 
 import java.util.Collection;
 import java.util.concurrent.TimeUnit;
@@ -30,7 +22,25 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
-import static org.jupiter.common.util.Preconditions.checkNotNull;
+import org.jupiter.common.util.JConstants;
+import org.jupiter.common.util.JServiceLoader;
+import org.jupiter.common.util.Requires;
+import org.jupiter.common.util.Strings;
+import org.jupiter.common.util.ThrowUtil;
+import org.jupiter.registry.AbstractRegistryService;
+import org.jupiter.registry.NotifyListener;
+import org.jupiter.registry.OfflineListener;
+import org.jupiter.registry.RegisterMeta;
+import org.jupiter.registry.RegistryService;
+import org.jupiter.rpc.consumer.processor.DefaultConsumerProcessor;
+import org.jupiter.rpc.model.metadata.ServiceMetadata;
+import org.jupiter.transport.Directory;
+import org.jupiter.transport.JConnection;
+import org.jupiter.transport.JConnectionManager;
+import org.jupiter.transport.JConnector;
+import org.jupiter.transport.UnresolvedAddress;
+import org.jupiter.transport.UnresolvedSocketAddress;
+import org.jupiter.transport.channel.JChannelGroup;
 
 /**
  * Jupiter默认客户端实现.
@@ -41,12 +51,6 @@ import static org.jupiter.common.util.Preconditions.checkNotNull;
  * @author jiachun.fjc
  */
 public class DefaultClient implements JClient {
-
-    static {
-        // touch off TracingUtil.<clinit>
-        // because getLocalAddress() and getPid() sometimes too slow
-        ClassUtil.initializeClass("org.jupiter.rpc.tracing.TracingUtil", 500);
-    }
 
     // 服务订阅(SPI)
     private final RegistryService registryService;
@@ -109,9 +113,9 @@ public class DefaultClient implements JClient {
 
     @Override
     public JConnector.ConnectionWatcher watchConnections(Class<?> interfaceClass, String version) {
-        checkNotNull(interfaceClass, "interfaceClass");
+        Requires.requireNotNull(interfaceClass, "interfaceClass");
         ServiceProvider annotation = interfaceClass.getAnnotation(ServiceProvider.class);
-        checkNotNull(annotation, interfaceClass + " is not a ServiceProvider interface");
+        Requires.requireNotNull(annotation, interfaceClass + " is not a ServiceProvider interface");
         String providerName = annotation.name();
         providerName = Strings.isNotBlank(providerName) ? providerName : interfaceClass.getName();
         version = Strings.isNotBlank(version) ? version : JConstants.DEFAULT_VERSION;
@@ -143,28 +147,18 @@ public class DefaultClient implements JClient {
                                 onSucceed(group, signalNeeded.getAndSet(false));
                             } else {
                                 if (group.isConnecting()) {
-                                    group.onAvailable(new Runnable() {
-
-                                        @Override
-                                        public void run() {
-                                            onSucceed(group, signalNeeded.getAndSet(false));
-                                        }
-                                    });
+                                    group.onAvailable(() -> onSucceed(group, signalNeeded.getAndSet(false)));
                                 } else {
                                     group.setConnecting(true);
                                     JConnection[] connections = connectTo(address, group, registerMeta, true);
                                     final AtomicInteger countdown = new AtomicInteger(connections.length);
                                     for (JConnection c : connections) {
-                                        c.operationComplete(new JConnection.OperationListener() {
-
-                                            @Override
-                                            public void complete(boolean isSuccess) {
-                                                if (isSuccess) {
-                                                    onSucceed(group, signalNeeded.getAndSet(false));
-                                                }
-                                                if (countdown.decrementAndGet() <= 0) {
-                                                    group.setConnecting(false);
-                                                }
+                                        c.operationComplete(isSuccess -> {
+                                            if (isSuccess) {
+                                                onSucceed(group, signalNeeded.getAndSet(false));
+                                            }
+                                            if (countdown.decrementAndGet() <= 0) {
+                                                group.setConnecting(false);
                                             }
                                         });
                                     }
@@ -180,6 +174,7 @@ public class DefaultClient implements JClient {
                         }
                     }
 
+                    @SuppressWarnings("SameParameterValue")
                     private JConnection[] connectTo(final UnresolvedAddress address, final JChannelGroup group, RegisterMeta registerMeta, boolean async) {
                         int connCount = registerMeta.getConnCount(); // global value from single client
                         connCount = connCount < 1 ? 1 : connCount;
@@ -192,14 +187,10 @@ public class DefaultClient implements JClient {
                             connectionManager.manage(connection);
                         }
 
-                        offlineListening(address, new OfflineListener() {
-
-                            @Override
-                            public void offline() {
-                                connectionManager.cancelAutoReconnect(address);
-                                if (!group.isAvailable()) {
-                                    connector.removeChannelGroup(directory, group);
-                                }
+                        offlineListening(address, () -> {
+                            connectionManager.cancelAutoReconnect(address);
+                            if (!group.isAvailable()) {
+                                connector.removeChannelGroup(directory, group);
                             }
                         });
 
@@ -305,9 +296,9 @@ public class DefaultClient implements JClient {
 
     private static RegisterMeta.ServiceMeta toServiceMeta(Directory directory) {
         RegisterMeta.ServiceMeta serviceMeta = new RegisterMeta.ServiceMeta();
-        serviceMeta.setGroup(checkNotNull(directory.getGroup(), "group"));
-        serviceMeta.setServiceProviderName(checkNotNull(directory.getServiceProviderName(), "serviceProviderName"));
-        serviceMeta.setVersion(checkNotNull(directory.getVersion(), "version"));
+        serviceMeta.setGroup(Requires.requireNotNull(directory.getGroup(), "group"));
+        serviceMeta.setServiceProviderName(Requires.requireNotNull(directory.getServiceProviderName(), "serviceProviderName"));
+        serviceMeta.setVersion(Requires.requireNotNull(directory.getVersion(), "version"));
         return serviceMeta;
     }
 

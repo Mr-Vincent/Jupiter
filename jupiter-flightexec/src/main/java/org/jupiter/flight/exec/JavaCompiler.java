@@ -13,19 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.jupiter.flight.exec;
 
-import org.jupiter.common.util.ThrowUtil;
-import org.jupiter.common.util.Function;
-import org.jupiter.common.util.Lists;
-
-import javax.tools.*;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URI;
 import java.util.List;
+
+import javax.tools.FileObject;
+import javax.tools.ForwardingJavaFileManager;
+import javax.tools.JavaFileObject;
+import javax.tools.SimpleJavaFileObject;
+import javax.tools.StandardJavaFileManager;
+import javax.tools.ToolProvider;
+
+import org.jupiter.common.util.Lists;
+import org.jupiter.common.util.ThrowUtil;
 
 /**
  * Java compiler, base on javac.
@@ -51,13 +55,7 @@ public class JavaCompiler {
             javaFileManager = javac.getStandardFileManager(null, null, null);
             classFileManager = new ClassFileManager(javaFileManager);
 
-            List<String> classFiles = Lists.transform(classNames, new Function<String, String>() {
-
-                @Override
-                public String apply(String input) {
-                    return classPath + input.replace(".", "/") + ".java";
-                }
-            });
+            List<String> classFiles = Lists.transform(classNames, input -> classPath + input.replace(".", "/") + ".java");
             String[] names = classFiles.toArray(new String[classFiles.size()]);
             javax.tools.JavaCompiler.CompilationTask javacTask =
                     javac.getTask(null, classFileManager, null, args, null, javaFileManager.getJavaFileObjects(names));

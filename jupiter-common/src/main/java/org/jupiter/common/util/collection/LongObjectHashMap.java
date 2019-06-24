@@ -1,7 +1,5 @@
 package org.jupiter.common.util.collection;
 
-import org.jupiter.common.util.Ints;
-
 import java.util.AbstractCollection;
 import java.util.AbstractSet;
 import java.util.Arrays;
@@ -10,6 +8,8 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
+
+import org.jupiter.common.util.Ints;
 
 /**
  * A hash map implementation of {@link LongObjectMap} that uses open addressing for keys.
@@ -46,12 +46,7 @@ public class LongObjectHashMap<V> implements LongObjectMap<V> {
 
     private final Set<Long> keySet = new KeySet();
     private final Set<Entry<Long, V>> entrySet = new EntrySet();
-    private final Iterable<PrimitiveEntry<V>> entries = new Iterable<PrimitiveEntry<V>>() {
-        @Override
-        public Iterator<PrimitiveEntry<V>> iterator() {
-            return new PrimitiveIterator();
-        }
-    };
+    private final Iterable<PrimitiveEntry<V>> entries = PrimitiveIterator::new;
 
     public LongObjectHashMap() {
         this(DEFAULT_CAPACITY, DEFAULT_LOAD_FACTOR);

@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.jupiter.monitor.handler;
 
 import io.netty.channel.Channel;
+
 import org.jupiter.common.util.JConstants;
 import org.jupiter.monitor.Command;
 import org.jupiter.monitor.metric.MetricsReporter;
@@ -39,11 +39,8 @@ public class MetricsHandler implements CommandHandler {
 
             Command.ChildCommand child = command.parseChild(args[1]);
             if (child != null) {
-                switch (child) {
-                    case REPORT:
-                        channel.writeAndFlush(MetricsReporter.report());
-
-                        break;
+                if (child == Command.ChildCommand.REPORT) {
+                    channel.writeAndFlush(MetricsReporter.report());
                 }
             } else {
                 channel.writeAndFlush("Wrong args denied!" + JConstants.NEWLINE);

@@ -13,17 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.jupiter.common.util.internal;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 
-import static java.lang.Character.*;
+import static java.lang.Character.MAX_SURROGATE;
+import static java.lang.Character.MIN_HIGH_SURROGATE;
+import static java.lang.Character.MIN_LOW_SURROGATE;
+import static java.lang.Character.MIN_SUPPLEMENTARY_CODE_POINT;
+import static java.lang.Character.MIN_SURROGATE;
+import static java.lang.Character.isSurrogatePair;
+import static java.lang.Character.toCodePoint;
 
 /**
  * jupiter
  * org.jupiter.common.util.internal
+ *
+ * Forked from protobuf <A>https://github.com/protocolbuffers/protobuf<A/>.
  *
  * @author jiachun.fjc
  */
@@ -190,7 +197,7 @@ public final class UnsafeUtf8Util {
         return UnsafeUtil.moveToString(resultArr);
     }
 
-    public static int encodeUtf8(final CharSequence in, final byte[] out, final int offset, final int length) {
+    public static int encodeUtf8(CharSequence in, byte[] out, int offset, int length) {
         long outIx = offset;
         final long outLimit = outIx + length;
         final int inLimit = in.length();

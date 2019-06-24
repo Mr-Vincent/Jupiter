@@ -13,33 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.jupiter.registry;
-
-import io.netty.bootstrap.Bootstrap;
-import io.netty.buffer.ByteBuf;
-import io.netty.channel.*;
-import io.netty.handler.codec.DecoderException;
-import io.netty.handler.codec.MessageToByteEncoder;
-import io.netty.handler.codec.ReplayingDecoder;
-import io.netty.util.Attribute;
-import io.netty.util.AttributeKey;
-import io.netty.util.ReferenceCountUtil;
-import org.jupiter.common.concurrent.collection.ConcurrentSet;
-import org.jupiter.common.util.*;
-import org.jupiter.common.util.internal.logging.InternalLogger;
-import org.jupiter.common.util.internal.logging.InternalLoggerFactory;
-import org.jupiter.serialization.Serializer;
-import org.jupiter.serialization.SerializerFactory;
-import org.jupiter.serialization.SerializerType;
-import org.jupiter.transport.*;
-import org.jupiter.transport.exception.ConnectFailedException;
-import org.jupiter.transport.exception.IoSignals;
-import org.jupiter.transport.netty.NettyTcpConnector;
-import org.jupiter.transport.netty.handler.AcknowledgeEncoder;
-import org.jupiter.transport.netty.handler.IdleStateChecker;
-import org.jupiter.transport.netty.handler.connector.ConnectionWatchdog;
-import org.jupiter.transport.netty.handler.connector.ConnectorIdleStateTrigger;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -48,8 +22,48 @@ import java.util.List;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 
-import static org.jupiter.common.util.Preconditions.checkNotNull;
-import static org.jupiter.common.util.StackTraceUtil.stackTrace;
+import io.netty.bootstrap.Bootstrap;
+import io.netty.buffer.ByteBuf;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelFutureListener;
+import io.netty.channel.ChannelHandler;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelInboundHandlerAdapter;
+import io.netty.channel.ChannelInitializer;
+import io.netty.handler.codec.DecoderException;
+import io.netty.handler.codec.MessageToByteEncoder;
+import io.netty.handler.codec.ReplayingDecoder;
+import io.netty.util.Attribute;
+import io.netty.util.AttributeKey;
+import io.netty.util.ReferenceCountUtil;
+
+import org.jupiter.common.concurrent.collection.ConcurrentSet;
+import org.jupiter.common.util.JConstants;
+import org.jupiter.common.util.Maps;
+import org.jupiter.common.util.Pair;
+import org.jupiter.common.util.Requires;
+import org.jupiter.common.util.Signal;
+import org.jupiter.common.util.StackTraceUtil;
+import org.jupiter.common.util.SystemClock;
+import org.jupiter.common.util.SystemPropertyUtil;
+import org.jupiter.common.util.internal.logging.InternalLogger;
+import org.jupiter.common.util.internal.logging.InternalLoggerFactory;
+import org.jupiter.serialization.Serializer;
+import org.jupiter.serialization.SerializerFactory;
+import org.jupiter.serialization.SerializerType;
+import org.jupiter.transport.Acknowledge;
+import org.jupiter.transport.JConnection;
+import org.jupiter.transport.JOption;
+import org.jupiter.transport.JProtocolHeader;
+import org.jupiter.transport.UnresolvedAddress;
+import org.jupiter.transport.exception.ConnectFailedException;
+import org.jupiter.transport.exception.IoSignals;
+import org.jupiter.transport.netty.NettyTcpConnector;
+import org.jupiter.transport.netty.handler.AcknowledgeEncoder;
+import org.jupiter.transport.netty.handler.IdleStateChecker;
+import org.jupiter.transport.netty.handler.connector.ConnectionWatchdog;
+import org.jupiter.transport.netty.handler.connector.ConnectorIdleStateTrigger;
 
 /**
  * The client of registration center.
@@ -96,7 +110,7 @@ public final class DefaultRegistry extends NettyTcpConnector {
 
     public DefaultRegistry(AbstractRegistryService registryService, int nWorkers) {
         super(nWorkers);
-        this.registryService = checkNotNull(registryService, "registryService");
+        this.registryService = Requires.requireNotNull(registryService, "registryService");
     }
 
     @Override
@@ -216,19 +230,15 @@ public final class DefaultRegistry extends NettyTcpConnector {
         msg.data(meta);
 
         channel.writeAndFlush(msg)
-                .addListener(new ChannelFutureListener() {
-
-                    @Override
-                    public void operationComplete(ChannelFuture future) throws Exception {
-                        if (!future.isSuccess()) {
-                            Channel ch = future.channel();
-                            if (ch.isActive()) {
-                                ch.pipeline().fireExceptionCaught(future.cause());
-                            } else {
-                                if (logger.isWarnEnabled()) {
-                                    logger.warn("Unregister {} fail because of channel is inactive: {}.",
-                                            meta, stackTrace(future.cause()));
-                                }
+                .addListener((ChannelFutureListener) future -> {
+                    if (!future.isSuccess()) {
+                        Channel ch = future.channel();
+                        if (ch.isActive()) {
+                            ch.pipeline().fireExceptionCaught(future.cause());
+                        } else {
+                            if (logger.isWarnEnabled()) {
+                                logger.warn("Unregister {} fail because of channel is inactive: {}.",
+                                        meta, StackTraceUtil.stackTrace(future.cause()));
                             }
                         }
                     }
@@ -540,15 +550,17 @@ public final class DefaultRegistry extends NettyTcpConnector {
 
                 ch.close();
             } else if (cause instanceof IOException) {
-                logger.error("I/O exception was caught: {}, force to close channel: {}.", stackTrace(cause), ch);
+                logger.error("I/O exception was caught: {}, force to close channel: {}.",
+                        StackTraceUtil.stackTrace(cause), ch);
 
                 ch.close();
             } else if (cause instanceof DecoderException) {
-                logger.error("Decoder exception was caught: {}, force to close channel: {}.", stackTrace(cause), ch);
+                logger.error("Decoder exception was caught: {}, force to close channel: {}.",
+                        StackTraceUtil.stackTrace(cause), ch);
 
                 ch.close();
             } else {
-                logger.error("Unexpected exception was caught: {}, channel: {}.", stackTrace(cause), ch);
+                logger.error("Unexpected exception was caught: {}, channel: {}.", StackTraceUtil.stackTrace(cause), ch);
             }
         }
     }
@@ -577,7 +589,8 @@ public final class DefaultRegistry extends NettyTcpConnector {
 
                     Thread.sleep(300);
                 } catch (Throwable t) {
-                    logger.error("An exception was caught while scanning the timeout acknowledges {}.", stackTrace(t));
+                    logger.error("An exception was caught while scanning the timeout acknowledges {}.",
+                            StackTraceUtil.stackTrace(t));
                 }
             }
         }

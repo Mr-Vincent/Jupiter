@@ -13,10 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.jupiter.common.util;
 
-import org.jupiter.common.util.internal.*;
+import org.jupiter.common.util.internal.InternalThreadLocalMap;
 
 /**
  * 基于 {@link org.jupiter.common.util.internal.InternalThreadLocal} 的 {@link StringBuilder} 重复利用.

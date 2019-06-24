@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.jupiter.example.flight.exec;
 
 import org.jupiter.common.util.Lists;
@@ -21,7 +20,10 @@ import org.jupiter.common.util.SystemPropertyUtil;
 import org.jupiter.flight.exec.ExecResult;
 import org.jupiter.flight.exec.JavaClassExec;
 import org.jupiter.flight.exec.JavaCompiler;
-import org.jupiter.rpc.*;
+import org.jupiter.rpc.DefaultClient;
+import org.jupiter.rpc.DispatchType;
+import org.jupiter.rpc.InvokeType;
+import org.jupiter.rpc.JClient;
 import org.jupiter.rpc.consumer.ProxyFactory;
 import org.jupiter.rpc.consumer.future.InvokeFutureContext;
 import org.jupiter.rpc.consumer.future.InvokeFutureGroup;
@@ -66,10 +68,8 @@ public class FlightExecJupiterClient {
             service.exec(classBytes);
 
             final InvokeFutureGroup<ExecResult> future = InvokeFutureContext.futureBroadcast(ExecResult.class);
-            future.addListener(new JListener<ExecResult>() {
-
-                @Override
-                public void complete(ExecResult result) {
+            future.whenComplete((result, throwable) -> {
+                if (throwable == null) {
                     synchronized (future) {
                         System.out.println("= debug info ======================================");
                         System.out.println(result.getDebugInfo());
@@ -78,11 +78,8 @@ public class FlightExecJupiterClient {
                         System.out.println();
                         System.out.println();
                     }
-                }
-
-                @Override
-                public void failure(Throwable cause) {
-                    cause.printStackTrace();
+                } else {
+                    throwable.printStackTrace();
                 }
             });
         } catch (Exception e) {

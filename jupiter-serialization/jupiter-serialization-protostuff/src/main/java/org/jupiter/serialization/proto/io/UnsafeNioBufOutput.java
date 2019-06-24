@@ -13,15 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.jupiter.serialization.proto.io;
+
+import java.io.IOException;
 
 import org.jupiter.common.util.internal.UnsafeDirectBufferUtil;
 import org.jupiter.common.util.internal.UnsafeUtf8Util;
 import org.jupiter.common.util.internal.UnsafeUtil;
 import org.jupiter.serialization.io.OutputBuf;
-
-import java.io.IOException;
 
 import static io.protostuff.WireFormat.WIRETYPE_LENGTH_DELIMITED;
 import static io.protostuff.WireFormat.makeTag;
@@ -148,6 +147,7 @@ class UnsafeNioBufOutput extends NioBufOutput {
         nioBuffer.position(position);
     }
 
+    @SuppressWarnings("DuplicateExpressions")
     @Override
     protected void writeVarInt64(long value) throws IOException {
 //        ensureCapacity(10);

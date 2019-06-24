@@ -13,14 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.jupiter.common.concurrent.disruptor;
 
-import com.lmax.disruptor.ExceptionHandler;
+import org.jupiter.common.util.StackTraceUtil;
 import org.jupiter.common.util.internal.logging.InternalLogger;
 import org.jupiter.common.util.internal.logging.InternalLoggerFactory;
 
-import static org.jupiter.common.util.StackTraceUtil.stackTrace;
+import com.lmax.disruptor.ExceptionHandler;
 
 /**
  * Jupiter
@@ -35,21 +34,21 @@ public class LoggingExceptionHandler implements ExceptionHandler<Object> {
     @Override
     public void handleEventException(Throwable ex, long sequence, Object event) {
         if (logger.isWarnEnabled()) {
-            logger.warn("Exception processing: {} {}, {}.", sequence, event, stackTrace(ex));
+            logger.warn("Exception processing: {} {}, {}.", sequence, event, StackTraceUtil.stackTrace(ex));
         }
     }
 
     @Override
     public void handleOnStartException(Throwable ex) {
         if (logger.isWarnEnabled()) {
-            logger.warn("Exception during onStart(), {}.", stackTrace(ex));
+            logger.warn("Exception during onStart(), {}.", StackTraceUtil.stackTrace(ex));
         }
     }
 
     @Override
     public void handleOnShutdownException(Throwable ex) {
         if (logger.isWarnEnabled()) {
-            logger.warn("Exception during onShutdown(), {}.", stackTrace(ex));
+            logger.warn("Exception during onShutdown(), {}.", StackTraceUtil.stackTrace(ex));
         }
     }
 }

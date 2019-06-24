@@ -13,13 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.jupiter.rpc.consumer.future;
+
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import org.jupiter.common.concurrent.NamedThreadFactory;
 import org.jupiter.common.util.JConstants;
 import org.jupiter.common.util.Maps;
-import org.jupiter.common.util.Signal;
 import org.jupiter.common.util.SystemPropertyUtil;
 import org.jupiter.common.util.internal.logging.InternalLogger;
 import org.jupiter.common.util.internal.logging.InternalLoggerFactory;
@@ -27,7 +30,6 @@ import org.jupiter.common.util.timer.HashedWheelTimer;
 import org.jupiter.common.util.timer.Timeout;
 import org.jupiter.common.util.timer.TimerTask;
 import org.jupiter.rpc.DispatchType;
-import org.jupiter.rpc.JListener;
 import org.jupiter.rpc.JResponse;
 import org.jupiter.rpc.consumer.ConsumerInterceptor;
 import org.jupiter.rpc.exception.JupiterBizException;
@@ -35,15 +37,8 @@ import org.jupiter.rpc.exception.JupiterRemoteException;
 import org.jupiter.rpc.exception.JupiterSerializationException;
 import org.jupiter.rpc.exception.JupiterTimeoutException;
 import org.jupiter.rpc.model.metadata.ResultWrapper;
-import org.jupiter.rpc.tracing.TraceId;
 import org.jupiter.transport.Status;
 import org.jupiter.transport.channel.JChannel;
-
-import java.net.SocketAddress;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.TimeUnit;
-
-import static org.jupiter.common.util.StackTraceUtil.stackTrace;
 
 /**
  * jupiter
@@ -51,7 +46,7 @@ import static org.jupiter.common.util.StackTraceUtil.stackTrace;
  *
  * @author jiachun.fjc
  */
-public class DefaultInvokeFuture<V> extends AbstractListenableFuture<V> implements InvokeFuture<V> {
+public class DefaultInvokeFuture<V> extends CompletableFuture<V> implements InvokeFuture<V> {
 
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(DefaultInvokeFuture.class);
 
@@ -83,7 +78,6 @@ public class DefaultInvokeFuture<V> extends AbstractListenableFuture<V> implemen
     private volatile boolean sent = false;
 
     private ConsumerInterceptor[] interceptors;
-    private TraceId traceId;
 
     public static <T> DefaultInvokeFuture<T> with(
             long invokeId, JChannel channel, long timeoutMillis, Class<T> returnType, DispatchType dispatchType) {
@@ -131,28 +125,9 @@ public class DefaultInvokeFuture<V> extends AbstractListenableFuture<V> implemen
     public V getResult() throws Throwable {
         try {
             return get(timeout, TimeUnit.NANOSECONDS);
-        } catch (Signal s) {
-            SocketAddress address = channel.remoteAddress();
-            if (s == TIMEOUT) {
-                throw new JupiterTimeoutException(address, sent ? Status.SERVER_TIMEOUT : Status.CLIENT_TIMEOUT);
-            } else {
-                throw new JupiterRemoteException(s.name(), address);
-            }
-        }
-    }
-
-    @SuppressWarnings("unchecked")
-    @Override
-    protected void notifyListener0(JListener<V> listener, int state, Object x) {
-        try {
-            if (state == NORMAL) {
-                listener.complete((V) x);
-            } else {
-                listener.failure((Throwable) x);
-            }
-        } catch (Throwable t) {
-            logger.error("An exception was thrown by {}.{}, {}.",
-                    listener.getClass().getName(), state == NORMAL ? "complete()" : "failure()", stackTrace(t));
+        } catch (TimeoutException e) {
+            throw new JupiterTimeoutException(e, channel.remoteAddress(),
+                    sent ? Status.SERVER_TIMEOUT : Status.CLIENT_TIMEOUT);
         }
     }
 
@@ -169,22 +144,13 @@ public class DefaultInvokeFuture<V> extends AbstractListenableFuture<V> implemen
         return this;
     }
 
-    public TraceId traceId() {
-        return traceId;
-    }
-
-    public DefaultInvokeFuture<V> traceId(TraceId traceId) {
-        this.traceId = traceId;
-        return this;
-    }
-
     @SuppressWarnings("all")
     private void doReceived(JResponse response) {
         byte status = response.status();
 
         if (status == Status.OK.value()) {
             ResultWrapper wrapper = response.result();
-            set((V) wrapper.getResult());
+            complete((V) wrapper.getResult());
         } else {
             setException(status, response);
         }
@@ -192,7 +158,7 @@ public class DefaultInvokeFuture<V> extends AbstractListenableFuture<V> implemen
         ConsumerInterceptor[] interceptors = this.interceptors; // snapshot
         if (interceptors != null) {
             for (int i = interceptors.length - 1; i >= 0; i--) {
-                interceptors[i].afterInvoke(traceId, response, channel);
+                interceptors[i].afterInvoke(response, channel);
             }
         }
     }
@@ -216,13 +182,13 @@ public class DefaultInvokeFuture<V> extends AbstractListenableFuture<V> implemen
         } else {
             ResultWrapper wrapper = response.result();
             Object result = wrapper.getResult();
-            if (result != null && result instanceof JupiterRemoteException) {
+            if (result instanceof JupiterRemoteException) {
                 cause = (JupiterRemoteException) result;
             } else {
                 cause = new JupiterRemoteException(response.toString(), channel.remoteAddress());
             }
         }
-        setException(cause);
+        completeExceptionally(cause);
     }
 
     public static void received(JChannel channel, JResponse response) {

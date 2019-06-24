@@ -13,17 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.jupiter.monitor.handler;
-
-import io.netty.channel.Channel;
-import org.jupiter.common.util.JConstants;
-import org.jupiter.common.util.JvmTools;
-import org.jupiter.monitor.Command;
 
 import java.util.List;
 
-import static org.jupiter.common.util.StackTraceUtil.stackTrace;
+import io.netty.channel.Channel;
+
+import org.jupiter.common.util.JConstants;
+import org.jupiter.common.util.JvmTools;
+import org.jupiter.common.util.StackTraceUtil;
+import org.jupiter.monitor.Command;
 
 /**
  * Jupiter
@@ -42,7 +41,7 @@ public class MemoryUsageHandler implements CommandHandler {
             }
             channel.writeAndFlush(JConstants.NEWLINE);
         } catch (Exception e) {
-            channel.writeAndFlush(stackTrace(e));
+            channel.writeAndFlush(StackTraceUtil.stackTrace(e));
         }
     }
 }

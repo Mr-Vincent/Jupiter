@@ -13,17 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.jupiter.rpc.metric;
-
-import com.codahale.metrics.*;
-import org.jupiter.common.util.ClassUtil;
-import org.jupiter.common.util.JConstants;
 
 import java.io.File;
 import java.util.concurrent.TimeUnit;
 
-import static org.jupiter.common.util.Preconditions.checkNotNull;
+import org.jupiter.common.util.ClassUtil;
+import org.jupiter.common.util.JConstants;
+
+import com.codahale.metrics.ConsoleReporter;
+import com.codahale.metrics.Counter;
+import com.codahale.metrics.CsvReporter;
+import com.codahale.metrics.Histogram;
+import com.codahale.metrics.Meter;
+import com.codahale.metrics.Metric;
+import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.ScheduledReporter;
+import com.codahale.metrics.Slf4jReporter;
+import com.codahale.metrics.Timer;
+
+import static org.jupiter.common.util.Requires.requireNotNull;
 
 /**
  * 指标度量
@@ -74,7 +83,7 @@ public class Metrics {
      * a new {@link Meter} if none is registered.
      */
     public static Meter meter(String name) {
-        return metricRegistry.meter(checkNotNull(name, "name"));
+        return metricRegistry.meter(requireNotNull(name, "name"));
     }
 
     /**
@@ -90,7 +99,7 @@ public class Metrics {
      * a new {@link Timer} if none is registered.
      */
     public static Timer timer(String name) {
-        return metricRegistry.timer(checkNotNull(name, "name"));
+        return metricRegistry.timer(requireNotNull(name, "name"));
     }
 
     /**
@@ -106,7 +115,7 @@ public class Metrics {
      * a new {@link Counter} if none is registered.
      */
     public static Counter counter(String name) {
-        return metricRegistry.counter(checkNotNull(name, "name"));
+        return metricRegistry.counter(requireNotNull(name, "name"));
     }
 
     /**
@@ -122,7 +131,7 @@ public class Metrics {
      * a new {@link Histogram} if none is registered.
      */
     public static Histogram histogram(String name) {
-        return metricRegistry.histogram(checkNotNull(name, "name"));
+        return metricRegistry.histogram(requireNotNull(name, "name"));
     }
 
     /**

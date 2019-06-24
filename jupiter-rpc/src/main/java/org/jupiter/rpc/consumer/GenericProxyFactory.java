@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 The Jupiter Project
+ * Copyright (c) 2015 The Jupiter Project
  *
  * Licensed under the Apache License, version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,11 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.jupiter.rpc.consumer;
+
+import java.util.Collections;
+import java.util.List;
 
 import org.jupiter.common.util.JConstants;
 import org.jupiter.common.util.Lists;
+import org.jupiter.common.util.Requires;
 import org.jupiter.common.util.Strings;
 import org.jupiter.rpc.DispatchType;
 import org.jupiter.rpc.InvokeType;
@@ -39,12 +42,6 @@ import org.jupiter.transport.Directory;
 import org.jupiter.transport.JConnection;
 import org.jupiter.transport.JConnector;
 import org.jupiter.transport.UnresolvedAddress;
-
-import java.util.Collections;
-import java.util.List;
-
-import static org.jupiter.common.util.Preconditions.checkArgument;
-import static org.jupiter.common.util.Preconditions.checkNotNull;
 
 /**
  * 泛化ProxyFactory
@@ -71,6 +68,8 @@ public class GenericProxyFactory {
     private SerializerType serializerType = SerializerType.getDefault();
     // 软负载均衡类型
     private LoadBalancerType loadBalancerType = LoadBalancerType.getDefault();
+    // 基于ExtSpiLoadBalancerFactory扩展的负载均衡可以选择指定名字, 可以利用名字作为唯一标识扩展多种类型的负载均衡
+    private String extLoadBalancerName;
     // provider地址
     private List<UnresolvedAddress> addresses;
     // 调用方式 [同步, 异步]
@@ -136,6 +135,12 @@ public class GenericProxyFactory {
         return this;
     }
 
+    public GenericProxyFactory loadBalancerType(LoadBalancerType loadBalancerType, String extLoadBalancerName) {
+        this.loadBalancerType = loadBalancerType;
+        this.extLoadBalancerName = extLoadBalancerName;
+        return this;
+    }
+
     public GenericProxyFactory addProviderAddress(UnresolvedAddress... addresses) {
         Collections.addAll(this.addresses, addresses);
         return this;
@@ -147,12 +152,12 @@ public class GenericProxyFactory {
     }
 
     public GenericProxyFactory invokeType(InvokeType invokeType) {
-        this.invokeType = checkNotNull(invokeType);
+        this.invokeType = Requires.requireNotNull(invokeType);
         return this;
     }
 
     public GenericProxyFactory dispatchType(DispatchType dispatchType) {
-        this.dispatchType = checkNotNull(dispatchType);
+        this.dispatchType = Requires.requireNotNull(dispatchType);
         return this;
     }
 
@@ -183,10 +188,10 @@ public class GenericProxyFactory {
 
     public GenericInvoker newProxyInstance() {
         // check arguments
-        checkArgument(Strings.isNotBlank(group), "group");
-        checkArgument(Strings.isNotBlank(providerName), "providerName");
-        checkNotNull(client, "client");
-        checkNotNull(serializerType, "serializerType");
+        Requires.requireTrue(Strings.isNotBlank(group), "group");
+        Requires.requireTrue(Strings.isNotBlank(providerName), "providerName");
+        Requires.requireNotNull(client, "client");
+        Requires.requireNotNull(serializerType, "serializerType");
 
         if (dispatchType == DispatchType.BROADCAST && invokeType == InvokeType.SYNC) {
             throw reject("broadcast & sync unsupported");
@@ -213,6 +218,7 @@ public class GenericProxyFactory {
         ClusterStrategyConfig strategyConfig = ClusterStrategyConfig.of(strategy, retries);
         switch (invokeType) {
             case SYNC:
+            case AUTO:
                 return new SyncGenericInvoker(client.appName(), metadata, dispatcher, strategyConfig, methodSpecialConfigs);
             case ASYNC:
                 return new AsyncGenericInvoker(client.appName(), metadata, dispatcher, strategyConfig, methodSpecialConfigs);
@@ -225,7 +231,8 @@ public class GenericProxyFactory {
         switch (dispatchType) {
             case ROUND:
                 return new DefaultRoundDispatcher(
-                        client, LoadBalancerFactory.loadBalancer(loadBalancerType), serializerType);
+                        client,
+                        LoadBalancerFactory.getInstance(loadBalancerType, extLoadBalancerName), serializerType);
             case BROADCAST:
                 return new DefaultBroadcastDispatcher(client, serializerType);
             default:

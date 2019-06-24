@@ -13,15 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.jupiter.common.util;
-
-import org.junit.Test;
 
 import java.util.LinkedList;
 import java.util.List;
 
-import static org.junit.Assert.assertTrue;
+import org.junit.Test;
+
+import static org.junit.Assert.assertEquals;
 
 /**
  * jupiter
@@ -39,15 +38,9 @@ public class ListsTest {
         fromList.add("3");
         fromList.add("4");
 
-        List<Integer> toList = Lists.transform(fromList, new Function<String, Integer>() {
+        List<Integer> toList = Lists.transform(fromList, Integer::parseInt);
 
-            @Override
-            public Integer apply(String input) {
-                return Integer.parseInt(input);
-            }
-        });
-
-        assertTrue(toList.size() == fromList.size());
+        assertEquals(toList.size(), fromList.size());
         System.out.println(toList);
     }
 }

@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.jupiter.serialization.kryo.io;
+
+import org.jupiter.serialization.io.OutputBuf;
 
 import com.esotericsoftware.kryo.KryoException;
 import com.esotericsoftware.kryo.io.ByteBufferOutput;
-import org.jupiter.serialization.io.OutputBuf;
 
 /**
  * jupiter

@@ -13,12 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.jupiter.common.util;
 
-import org.jupiter.common.util.internal.InternalThreadLocal;
-
 import java.util.concurrent.atomic.AtomicLongFieldUpdater;
+
+import org.jupiter.common.util.internal.InternalThreadLocal;
 
 /**
  * 利用对象继承的内存布局规则来padding避免false sharing, 注意其中对象头会至少占用8个字节

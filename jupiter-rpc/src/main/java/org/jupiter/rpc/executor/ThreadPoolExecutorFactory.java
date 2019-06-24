@@ -13,20 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.jupiter.rpc.executor;
+
+import java.lang.reflect.Constructor;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.RejectedExecutionHandler;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 import org.jupiter.common.concurrent.RejectedTaskPolicyWithReport;
 import org.jupiter.common.util.SpiMetadata;
+import org.jupiter.common.util.StackTraceUtil;
 import org.jupiter.common.util.Strings;
 import org.jupiter.common.util.SystemPropertyUtil;
 import org.jupiter.common.util.internal.logging.InternalLogger;
 import org.jupiter.common.util.internal.logging.InternalLoggerFactory;
-
-import java.lang.reflect.Constructor;
-import java.util.concurrent.*;
-
-import static org.jupiter.common.util.StackTraceUtil.stackTrace;
 
 /**
  * Provide a {@link ThreadPoolExecutor} implementation of executor.
@@ -56,8 +59,8 @@ public class ThreadPoolExecutorFactory extends AbstractExecutorFactory {
         return new CloseableExecutor() {
 
             @Override
-            public void execute(Runnable r) {
-                executor.execute(r);
+            public void execute(Runnable task) {
+                executor.execute(task);
             }
 
             @Override
@@ -84,6 +87,7 @@ public class ThreadPoolExecutorFactory extends AbstractExecutorFactory {
         return workQueue;
     }
 
+    @SuppressWarnings("SameParameterValue")
     private WorkQueueType queueType(Target target, WorkQueueType defaultType) {
         WorkQueueType queueType = null;
         switch (target) {
@@ -120,7 +124,7 @@ public class ThreadPoolExecutorFactory extends AbstractExecutorFactory {
                 }
             } catch (Exception e) {
                 if (logger.isWarnEnabled()) {
-                    logger.warn("Construct {} failed, {}.", handlerClass, stackTrace(e));
+                    logger.warn("Construct {} failed, {}.", handlerClass, StackTraceUtil.stackTrace(e));
                 }
             }
         }

@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.jupiter.flight.exec;
 
 import java.security.AccessController;
@@ -31,13 +30,8 @@ public class FlightExecClassLoader extends ClassLoader {
     private static ProtectionDomain PROTECTION_DOMAIN;
 
     static {
-        PROTECTION_DOMAIN = AccessController.doPrivileged(new PrivilegedAction<ProtectionDomain>() {
-
-            @Override
-            public ProtectionDomain run() {
-                return FlightExecClassLoader.class.getProtectionDomain();
-            }
-        });
+        PROTECTION_DOMAIN = AccessController.doPrivileged(
+                (PrivilegedAction<ProtectionDomain>) FlightExecClassLoader.class::getProtectionDomain);
     }
 
     public FlightExecClassLoader() {

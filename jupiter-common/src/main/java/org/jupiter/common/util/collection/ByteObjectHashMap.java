@@ -1,8 +1,15 @@
 package org.jupiter.common.util.collection;
 
-import org.jupiter.common.util.Ints;
+import java.util.AbstractCollection;
+import java.util.AbstractSet;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.Set;
 
-import java.util.*;
+import org.jupiter.common.util.Ints;
 
 /**
  * A hash map implementation of {@link ByteObjectMap} that uses open addressing for keys.
@@ -47,13 +54,7 @@ public class ByteObjectHashMap<V> implements ByteObjectMap<V> {
 
     private final Set<Byte> keySet = new KeySet();
     private final Set<Entry<Byte, V>> entrySet = new EntrySet();
-    private final Iterable<PrimitiveEntry<V>> entries = new Iterable<PrimitiveEntry<V>>() {
-
-        @Override
-        public Iterator<PrimitiveEntry<V>> iterator() {
-            return new PrimitiveIterator();
-        }
-    };
+    private final Iterable<PrimitiveEntry<V>> entries = PrimitiveIterator::new;
 
     public ByteObjectHashMap() {
         this(DEFAULT_CAPACITY, DEFAULT_LOAD_FACTOR);

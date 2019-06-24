@@ -13,13 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.jupiter.common.util;
 
+import org.jupiter.common.util.internal.ReferenceFieldUpdater;
+import org.jupiter.common.util.internal.Updaters;
 import org.jupiter.common.util.internal.UnsafeUtil;
-import org.jupiter.common.util.internal.UnsafeReferenceFieldUpdater;
-import org.jupiter.common.util.internal.UnsafeUpdater;
-import sun.misc.Unsafe;
 
 /**
  * jupiter
@@ -29,18 +27,17 @@ import sun.misc.Unsafe;
  */
 public final class ThrowUtil {
 
-    private static final UnsafeReferenceFieldUpdater<Throwable, Throwable> causeUpdater =
-            UnsafeUpdater.newReferenceFieldUpdater(Throwable.class, "cause");
+    private static final ReferenceFieldUpdater<Throwable, Throwable> causeUpdater =
+            Updaters.newReferenceFieldUpdater(Throwable.class, "cause");
 
     /**
      * Raises an exception bypassing compiler checks for checked exceptions.
      */
     public static void throwException(Throwable t) {
-        Unsafe unsafe = UnsafeUtil.getUnsafe();
-        if (unsafe != null) {
-            unsafe.throwException(t);
+        if (UnsafeUtil.hasUnsafe()) {
+            UnsafeUtil.getUnsafeAccessor().throwException(t);
         } else {
-            ThrowUtil.<RuntimeException>throwException0(t);
+            ThrowUtil.throwException0(t);
         }
     }
 
@@ -71,7 +68,6 @@ public final class ThrowUtil {
 
         if (rootCause != cause) {
             cause.setStackTrace(rootCause.getStackTrace());
-            assert causeUpdater != null;
             causeUpdater.set(cause, cause);
         }
         return cause;

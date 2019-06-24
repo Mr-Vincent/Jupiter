@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.jupiter.common.concurrent;
 
 import java.util.concurrent.ThreadPoolExecutor;
@@ -40,7 +39,7 @@ public class BlockingProducersPolicyWithReport extends AbstractRejectedExecution
     public void rejectedExecution(Runnable r, ThreadPoolExecutor e) {
         logger.error("Thread pool [{}] is exhausted! {}.", threadPoolName, e.toString());
 
-        dumpJvmInfo();
+        dumpJvmInfoIfNeeded();
 
         if (!e.isShutdown()) {
             try {

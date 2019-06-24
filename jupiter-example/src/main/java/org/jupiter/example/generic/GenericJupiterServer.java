@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 The Jupiter Project
+ * Copyright (c) 2015 The Jupiter Project
  *
  * Licensed under the Apache License, version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,8 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.jupiter.example.generic;
+
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.jupiter.example.GenericServiceTestImpl;
 import org.jupiter.monitor.MonitorServer;
@@ -25,8 +26,6 @@ import org.jupiter.rpc.flow.control.ControlResult;
 import org.jupiter.rpc.flow.control.FlowController;
 import org.jupiter.rpc.model.metadata.ServiceWrapper;
 import org.jupiter.transport.netty.JNettyTcpAcceptor;
-
-import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * jupiter

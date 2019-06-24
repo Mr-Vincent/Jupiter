@@ -13,8 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.jupiter.example.zookeeper;
+
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.jupiter.common.util.SystemPropertyUtil;
 import org.jupiter.example.ServiceTestImpl;
@@ -27,8 +28,6 @@ import org.jupiter.rpc.flow.control.ControlResult;
 import org.jupiter.rpc.flow.control.FlowController;
 import org.jupiter.rpc.model.metadata.ServiceWrapper;
 import org.jupiter.transport.netty.JNettyTcpAcceptor;
-
-import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * RegistryServer是基于SPI的, 使用zookeeper的话maven引入jupiter-registry-zookeeper即可
@@ -77,13 +76,7 @@ public class JupiterServer {
             server.connectToRegistryServer("127.0.0.1:2181,127.0.0.1:2182,127.0.0.1:2183");
             server.publish(provider);
 
-            Runtime.getRuntime().addShutdownHook(new Thread() {
-
-                @Override
-                public void run() {
-                    server.shutdownGracefully();
-                }
-            });
+            Runtime.getRuntime().addShutdownHook(new Thread(server::shutdownGracefully));
 
             server.start();
         } catch (InterruptedException e) {

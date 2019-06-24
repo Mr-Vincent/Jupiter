@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.jupiter.benchmark.tcp;
 
+import org.jupiter.common.util.JConstants;
 import org.jupiter.common.util.SystemPropertyUtil;
 import org.jupiter.monitor.MonitorServer;
 import org.jupiter.rpc.DefaultServer;
@@ -33,9 +33,9 @@ import org.jupiter.transport.netty.JNettyTcpAcceptor;
 public class BenchmarkServer {
 
     public static void main(String[] args) {
-//        SystemPropertyUtil.setProperty("jupiter.transport.codec.low_copy", "true");
+//        SystemPropertyUtil.setProperty("jupiter.io.codec.low_copy", "true");
 
-        final int processors = Runtime.getRuntime().availableProcessors();
+        final int processors = JConstants.AVAILABLE_PROCESSORS;
         SystemPropertyUtil
                 .setProperty("jupiter.executor.factory.provider.core.workers", String.valueOf(processors));
         SystemPropertyUtil
@@ -51,7 +51,7 @@ public class BenchmarkServer {
 
         // 设置全局provider executor
         SystemPropertyUtil
-                .setProperty("jupiter.executor.factory.provider.factory_name", "threadPool");
+                .setProperty("jupiter.executor.factory.provider.factory_name", "callerRuns");
 
         final JServer server = new DefaultServer().withAcceptor(new JNettyTcpAcceptor(18099, processors, true) {
 

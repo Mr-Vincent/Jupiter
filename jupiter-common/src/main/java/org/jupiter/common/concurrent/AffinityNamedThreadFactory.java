@@ -13,21 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.jupiter.common.concurrent;
+
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import net.openhft.affinity.AffinityLock;
 import net.openhft.affinity.AffinityStrategies;
 import net.openhft.affinity.AffinityStrategy;
+
 import org.jupiter.common.util.ClassUtil;
 import org.jupiter.common.util.internal.InternalThread;
 import org.jupiter.common.util.internal.logging.InternalLogger;
 import org.jupiter.common.util.internal.logging.InternalLoggerFactory;
 
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.atomic.AtomicInteger;
-
-import static org.jupiter.common.util.Preconditions.checkNotNull;
+import static org.jupiter.common.util.Requires.requireNotNull;
 
 /**
  * This is a ThreadFactory which assigns threads based the strategies provided.
@@ -80,21 +80,24 @@ public class AffinityNamedThreadFactory implements ThreadFactory {
 
     @Override
     public Thread newThread(Runnable r) {
-        checkNotNull(r, "runnable");
+        requireNotNull(r, "runnable");
 
         String name2 = name + id.getAndIncrement();
 
         final Runnable r2 = wrapRunnable(r);
 
-        Runnable r3 = new Runnable() {
-
-            @Override
-            public void run() {
-                AffinityLock al = acquireLockBasedOnLast();
-                try {
-                    r2.run();
-                } finally {
-                    al.release();
+        Runnable r3 = () -> {
+            AffinityLock al = null;
+            try {
+                al = acquireLockBasedOnLast();
+            } catch (Throwable ignored) { /* defensive: ignored error on acquiring lock */ }
+            try {
+                r2.run();
+            } finally {
+                if (al != null) {
+                    try {
+                        al.release();
+                    } catch (Throwable ignored) { /* defensive: ignored error on releasing lock */ }
                 }
             }
         };

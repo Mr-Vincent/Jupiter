@@ -13,9 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.jupiter.benchmark.unix.domain;
 
+import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicLong;
+
+import org.jupiter.common.util.JConstants;
 import org.jupiter.common.util.Lists;
 import org.jupiter.common.util.SystemPropertyUtil;
 import org.jupiter.common.util.internal.logging.InternalLogger;
@@ -32,10 +36,6 @@ import org.jupiter.transport.UnresolvedAddress;
 import org.jupiter.transport.UnresolvedDomainAddress;
 import org.jupiter.transport.netty.JNettyDomainConnector;
 
-import java.util.List;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.atomic.AtomicLong;
-
 /**
  *
  * 飞行记录: -XX:+UnlockCommercialFeatures -XX:+FlightRecorder
@@ -50,9 +50,9 @@ public class BenchmarkClient {
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(BenchmarkClient.class);
 
     public static void main(String[] args) {
-//        SystemPropertyUtil.setProperty("jupiter.transport.codec.low_copy", "true");
+//        SystemPropertyUtil.setProperty("jupiter.io.codec.low_copy", "true");
 
-        int processors = Runtime.getRuntime().availableProcessors();
+        int processors = JConstants.AVAILABLE_PROCESSORS;
         SystemPropertyUtil
                 .setProperty("jupiter.executor.factory.consumer.core.workers", String.valueOf(processors << 1));
         SystemPropertyUtil.setProperty("jupiter.tracing.needed", "false");
@@ -106,23 +106,19 @@ public class BenchmarkClient {
         final CountDownLatch latch = new CountDownLatch(processors << step);
         final AtomicLong count = new AtomicLong();
         for (int i = 0; i < (processors << step); i++) {
-            new Thread(new Runnable() {
+            new Thread(() -> {
+                for (int i1 = 0; i1 < t; i1++) {
+                    try {
+                        service.hello("jupiter");
 
-                @Override
-                public void run() {
-                    for (int i = 0; i < t; i++) {
-                        try {
-                            service.hello("jupiter");
-
-                            if (count.getAndIncrement() % 10000 == 0) {
-                                logger.warn("count=" + count.get());
-                            }
-                        } catch (Exception e) {
-                            e.printStackTrace();
+                        if (count.getAndIncrement() % 10000 == 0) {
+                            logger.warn("count=" + count.get());
                         }
+                    } catch (Exception e) {
+                        e.printStackTrace();
                     }
-                    latch.countDown();
                 }
+                latch.countDown();
             }).start();
         }
         try {

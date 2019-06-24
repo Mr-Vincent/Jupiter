@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.jupiter.monitor.handler;
 
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.util.AttributeKey;
+
 import org.jupiter.common.util.JConstants;
 import org.jupiter.common.util.MD5Util;
 import org.jupiter.common.util.SystemPropertyUtil;

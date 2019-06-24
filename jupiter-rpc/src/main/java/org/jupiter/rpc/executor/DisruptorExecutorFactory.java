@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.jupiter.rpc.executor;
 
 import org.jupiter.common.concurrent.disruptor.TaskDispatcher;
@@ -49,8 +48,8 @@ public class DisruptorExecutorFactory extends AbstractExecutorFactory {
         return new CloseableExecutor() {
 
             @Override
-            public void execute(Runnable r) {
-                executor.execute(r);
+            public void execute(Runnable task) {
+                executor.execute(task);
             }
 
             @Override
@@ -61,6 +60,7 @@ public class DisruptorExecutorFactory extends AbstractExecutorFactory {
         };
     }
 
+    @SuppressWarnings("SameParameterValue")
     private WaitStrategyType waitStrategyType(Target target, WaitStrategyType defaultType) {
         WaitStrategyType strategyType = null;
         switch (target) {

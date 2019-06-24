@@ -13,13 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.jupiter.common.util.internal;
-
-import org.jupiter.common.util.SystemPropertyUtil;
 
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import org.jupiter.common.util.SystemPropertyUtil;
 
 /**
  * 利用对象继承的内存布局规则来padding避免false sharing, 注意其中对象头会至少占用8个字节
@@ -62,8 +61,8 @@ class RhsPadding extends Fields {
  */
 public final class InternalThreadLocalMap extends RhsPadding {
 
-    private static final UnsafeReferenceFieldUpdater<StringBuilder, char[]> stringBuilderValueUpdater =
-            UnsafeUpdater.newReferenceFieldUpdater(StringBuilder.class.getSuperclass(), "value");
+    private static final ReferenceFieldUpdater<StringBuilder, char[]> stringBuilderValueUpdater =
+            Updaters.newReferenceFieldUpdater(StringBuilder.class.getSuperclass(), "value");
 
     private static final int DEFAULT_STRING_BUILDER_MAX_CAPACITY =
             SystemPropertyUtil.getInt("jupiter.internal.thread.local.string_builder_max_capacity", 1024 << 6);

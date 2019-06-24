@@ -13,20 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.jupiter.rpc.consumer.invoker;
-
-import org.jupiter.common.util.Maps;
-import org.jupiter.rpc.consumer.cluster.ClusterInvoker;
-import org.jupiter.rpc.consumer.cluster.FailFastClusterInvoker;
-import org.jupiter.rpc.consumer.cluster.FailOverClusterInvoker;
-import org.jupiter.rpc.consumer.cluster.FailSafeClusterInvoker;
-import org.jupiter.rpc.consumer.dispatcher.Dispatcher;
-import org.jupiter.rpc.model.metadata.ClusterStrategyConfig;
-import org.jupiter.rpc.model.metadata.MethodSpecialConfig;
 
 import java.util.List;
 import java.util.Map;
+
+import org.jupiter.common.util.Maps;
+import org.jupiter.rpc.consumer.cluster.ClusterInvoker;
+import org.jupiter.rpc.consumer.cluster.FailfastClusterInvoker;
+import org.jupiter.rpc.consumer.cluster.FailoverClusterInvoker;
+import org.jupiter.rpc.consumer.cluster.FailsafeClusterInvoker;
+import org.jupiter.rpc.consumer.dispatcher.Dispatcher;
+import org.jupiter.rpc.model.metadata.ClusterStrategyConfig;
+import org.jupiter.rpc.model.metadata.MethodSpecialConfig;
 
 /**
  * Jupiter
@@ -65,11 +64,11 @@ public class ClusterStrategyBridging {
         ClusterInvoker.Strategy s = strategy.getStrategy();
         switch (s) {
             case FAIL_FAST:
-                return new FailFastClusterInvoker(dispatcher);
+                return new FailfastClusterInvoker(dispatcher);
             case FAIL_OVER:
-                return new FailOverClusterInvoker(dispatcher, strategy.getFailoverRetries());
+                return new FailoverClusterInvoker(dispatcher, strategy.getFailoverRetries());
             case FAIL_SAFE:
-                return new FailSafeClusterInvoker(dispatcher);
+                return new FailsafeClusterInvoker(dispatcher);
             default:
                 throw new UnsupportedOperationException("Unsupported strategy: " + strategy);
         }

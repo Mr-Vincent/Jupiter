@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.jupiter.transport;
 
 import org.jupiter.common.util.StringBuilderHelper;
@@ -28,7 +27,7 @@ import org.jupiter.common.util.StringBuilderHelper;
  */
 public abstract class Directory {
 
-    private String directoryCache;
+    private transient String directoryCache;
 
     /** 服务所属组别 */
     public abstract String getGroup();

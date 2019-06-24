@@ -13,17 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.jupiter.registry;
-
-import org.jupiter.common.util.ThrowUtil;
-import org.jupiter.common.util.Lists;
-import org.jupiter.common.util.Reflects;
-import org.jupiter.common.util.SystemPropertyUtil;
 
 import java.lang.reflect.Constructor;
 import java.net.SocketAddress;
 import java.util.List;
+
+import org.jupiter.common.util.Lists;
+import org.jupiter.common.util.Reflects;
+import org.jupiter.common.util.SystemPropertyUtil;
+import org.jupiter.common.util.ThrowUtil;
 
 /**
  * jupiter
@@ -93,7 +92,6 @@ public interface RegistryServer extends RegistryMonitor {
             }
 
             try {
-                @SuppressWarnings("JavaReflectionMemberAccess")
                 Constructor<RegistryServer> c = defaultRegistryClass.getConstructor(parameterTypes);
                 c.setAccessible(true);
                 return c.newInstance(parameters);

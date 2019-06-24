@@ -13,19 +13,34 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.jupiter.rpc.provider.processor.task;
 
-import com.codahale.metrics.Meter;
-import com.codahale.metrics.Timer;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
+import java.util.concurrent.TimeUnit;
+
 import org.jupiter.common.concurrent.RejectedRunnable;
-import org.jupiter.common.util.*;
-import org.jupiter.common.util.internal.UnsafeIntegerFieldUpdater;
-import org.jupiter.common.util.internal.UnsafeUpdater;
+import org.jupiter.common.util.Pair;
+import org.jupiter.common.util.Reflects;
+import org.jupiter.common.util.Requires;
+import org.jupiter.common.util.Signal;
+import org.jupiter.common.util.StackTraceUtil;
+import org.jupiter.common.util.SystemClock;
+import org.jupiter.common.util.SystemPropertyUtil;
 import org.jupiter.common.util.internal.logging.InternalLogger;
 import org.jupiter.common.util.internal.logging.InternalLoggerFactory;
-import org.jupiter.rpc.*;
-import org.jupiter.rpc.exception.*;
+import org.jupiter.rpc.DefaultFilterChain;
+import org.jupiter.rpc.JFilter;
+import org.jupiter.rpc.JFilterChain;
+import org.jupiter.rpc.JFilterContext;
+import org.jupiter.rpc.JFilterLoader;
+import org.jupiter.rpc.JRequest;
+import org.jupiter.rpc.exception.JupiterBadRequestException;
+import org.jupiter.rpc.exception.JupiterFlowControlException;
+import org.jupiter.rpc.exception.JupiterRemoteException;
+import org.jupiter.rpc.exception.JupiterServerBusyException;
+import org.jupiter.rpc.exception.JupiterServiceNotFoundException;
 import org.jupiter.rpc.flow.control.ControlResult;
 import org.jupiter.rpc.flow.control.FlowController;
 import org.jupiter.rpc.metric.Metrics;
@@ -34,8 +49,6 @@ import org.jupiter.rpc.model.metadata.ResultWrapper;
 import org.jupiter.rpc.model.metadata.ServiceWrapper;
 import org.jupiter.rpc.provider.ProviderInterceptor;
 import org.jupiter.rpc.provider.processor.DefaultProviderProcessor;
-import org.jupiter.rpc.tracing.TraceId;
-import org.jupiter.rpc.tracing.TracingUtil;
 import org.jupiter.serialization.Serializer;
 import org.jupiter.serialization.SerializerFactory;
 import org.jupiter.serialization.io.InputBuf;
@@ -47,12 +60,8 @@ import org.jupiter.transport.channel.JFutureListener;
 import org.jupiter.transport.payload.JRequestPayload;
 import org.jupiter.transport.payload.JResponsePayload;
 
-import java.util.List;
-import java.util.concurrent.Executor;
-import java.util.concurrent.TimeUnit;
-
-import static org.jupiter.common.util.Preconditions.checkNotNull;
-import static org.jupiter.common.util.StackTraceUtil.stackTrace;
+import com.codahale.metrics.Meter;
+import com.codahale.metrics.Timer;
 
 /**
  *
@@ -68,9 +77,6 @@ public class MessageTask implements RejectedRunnable {
     private static final boolean METRIC_NEEDED = SystemPropertyUtil.getBoolean("jupiter.metric.needed", false);
 
     private static final Signal INVOKE_ERROR = Signal.valueOf(MessageTask.class, "INVOKE_ERROR");
-
-    private static final UnsafeIntegerFieldUpdater<TraceId> traceNodeUpdater =
-            UnsafeUpdater.newIntegerFieldUpdater(TraceId.class, "node");
 
     private final DefaultProviderProcessor processor;
     private final JChannel channel;
@@ -141,13 +147,7 @@ public class MessageTask implements RejectedRunnable {
             process(service);
         } else {
             // provider私有线程池执行
-            childExecutor.execute(new Runnable() {
-
-                @Override
-                public void run() {
-                    process(service);
-                }
-            });
+            childExecutor.execute(() -> process(service));
         }
     }
 
@@ -167,50 +167,69 @@ public class MessageTask implements RejectedRunnable {
         processor.handleRejected(channel, request, status, cause);
     }
 
+    @SuppressWarnings("unchecked")
     private void process(ServiceWrapper service) {
-        // stack copy
-        final JRequest _request = request;
-
-        Context invokeCtx = new Context(service);
-
-        if (TracingUtil.isTracingNeeded()) {
-            setCurrentTraceId(_request.message().getTraceId());
-        }
-
+        final Context invokeCtx = new Context(service);
         try {
-            Object invokeResult = Chains.invoke(_request, invokeCtx)
+            final Object invokeResult = Chains.invoke(request, invokeCtx)
                     .getResult();
 
-            ResultWrapper result = new ResultWrapper();
-            result.setResult(invokeResult);
-            byte s_code = _request.serializerCode();
-            Serializer serializer = SerializerFactory.getSerializer(s_code);
-
-            JResponsePayload responsePayload = new JResponsePayload(_request.invokeId());
-
-            if (CodecConfig.isCodecLowCopy()) {
-                OutputBuf outputBuf =
-                        serializer.writeObject(channel.allocOutputBuf(), result);
-                responsePayload.outputBuf(s_code, outputBuf);
-            } else {
-                byte[] bytes = serializer.writeObject(result);
-                responsePayload.bytes(s_code, bytes);
+            if (!(invokeResult instanceof CompletableFuture)) {
+                doProcess(invokeResult);
+                return;
             }
 
-            responsePayload.status(Status.OK.value());
+            CompletableFuture<Object> cf = (CompletableFuture<Object>) invokeResult;
 
-            handleWriteResponse(responsePayload);
+            if (cf.isDone()) {
+                doProcess(cf.join());
+                return;
+            }
+
+            cf.whenComplete((result, throwable) -> {
+                if (throwable == null) {
+                    try {
+                        doProcess(result);
+                    } catch (Throwable t) {
+                        handleFail(invokeCtx, t);
+                    }
+                } else {
+                    handleFail(invokeCtx, throwable);
+                }
+            });
         } catch (Throwable t) {
-            if (INVOKE_ERROR == t) {
-                // handle biz exception
-                handleException(invokeCtx.getExpectCauseTypes(), invokeCtx.getCause());
-            } else {
-                processor.handleException(channel, _request, Status.SERVER_ERROR, t);
-            }
-        } finally {
-            if (TracingUtil.isTracingNeeded()) {
-                TracingUtil.clearCurrent();
-            }
+            handleFail(invokeCtx, t);
+        }
+    }
+
+    private void doProcess(Object realResult) {
+        ResultWrapper result = new ResultWrapper();
+        result.setResult(realResult);
+        byte s_code = request.serializerCode();
+        Serializer serializer = SerializerFactory.getSerializer(s_code);
+
+        JResponsePayload responsePayload = new JResponsePayload(request.invokeId());
+
+        if (CodecConfig.isCodecLowCopy()) {
+            OutputBuf outputBuf =
+                    serializer.writeObject(channel.allocOutputBuf(), result);
+            responsePayload.outputBuf(s_code, outputBuf);
+        } else {
+            byte[] bytes = serializer.writeObject(result);
+            responsePayload.bytes(s_code, bytes);
+        }
+
+        responsePayload.status(Status.OK.value());
+
+        handleWriteResponse(responsePayload);
+    }
+
+    private void handleFail(Context invokeCtx, Throwable t) {
+        if (INVOKE_ERROR == t) {
+            // handle biz exception
+            handleException(invokeCtx.getExpectCauseTypes(), invokeCtx.getCause());
+        } else {
+            processor.handleException(channel, request, Status.SERVER_ERROR, t);
         }
     }
 
@@ -228,8 +247,8 @@ public class MessageTask implements RejectedRunnable {
             @Override
             public void operationFailure(JChannel channel, Throwable cause) throws Exception {
                 long duration = SystemClock.millisClock().now() - request.timestamp();
-                logger.error("Response sent failed, trace: {}, duration: {} millis, channel: {}, cause: {}.",
-                        request.getTraceId(), duration, channel, cause);
+                logger.error("Response sent failed, duration: {} millis, channel: {}, cause: {}.",
+                        duration, channel, cause);
             }
         });
     }
@@ -287,23 +306,21 @@ public class MessageTask implements RejectedRunnable {
 
     @SuppressWarnings("all")
     private static void handleBeforeInvoke(ProviderInterceptor[] interceptors,
-                                           TraceId traceId,
                                            Object provider,
                                            String methodName,
                                            Object[] args) {
 
         for (int i = 0; i < interceptors.length; i++) {
             try {
-                interceptors[i].beforeInvoke(traceId, provider, methodName, args);
+                interceptors[i].beforeInvoke(provider, methodName, args);
             } catch (Throwable t) {
-                logger.error("Interceptor[{}#beforeInvoke]: {}.", Reflects.simpleClassName(interceptors[i]), stackTrace(t));
+                logger.error("Interceptor[{}#beforeInvoke]: {}.", Reflects.simpleClassName(interceptors[i]),
+                        StackTraceUtil.stackTrace(t));
             }
         }
     }
 
-    @SuppressWarnings("all")
     private static void handleAfterInvoke(ProviderInterceptor[] interceptors,
-                                          TraceId traceId,
                                           Object provider,
                                           String methodName,
                                           Object[] args,
@@ -312,19 +329,12 @@ public class MessageTask implements RejectedRunnable {
 
         for (int i = interceptors.length - 1; i >= 0; i--) {
             try {
-                interceptors[i].afterInvoke(traceId, provider, methodName, args, invokeResult, failCause);
+                interceptors[i].afterInvoke(provider, methodName, args, invokeResult, failCause);
             } catch (Throwable t) {
-                logger.error("Interceptor[{}#afterInvoke]: {}.", Reflects.simpleClassName(interceptors[i]), stackTrace(t));
+                logger.error("Interceptor[{}#afterInvoke]: {}.", Reflects.simpleClassName(interceptors[i]),
+                        StackTraceUtil.stackTrace(t));
             }
         }
-    }
-
-    private static void setCurrentTraceId(TraceId traceId) {
-        if (traceId != null && traceId != TraceId.NULL_TRACE_ID) {
-            assert traceNodeUpdater != null;
-            traceNodeUpdater.set(traceId, traceId.getNode() + 1);
-        }
-        TracingUtil.setCurrent(traceId);
     }
 
     public static class Context implements JFilterContext {
@@ -336,7 +346,7 @@ public class MessageTask implements RejectedRunnable {
         private Class<?>[] expectCauseTypes;    // 预期内的异常类型
 
         public Context(ServiceWrapper service) {
-            this.service = checkNotNull(service, "service");
+            this.service = Requires.requireNotNull(service, "service");
         }
 
         public ServiceWrapper getService() {
@@ -387,19 +397,18 @@ public class MessageTask implements RejectedRunnable {
             if (interceptors == null || interceptors.length == 0) {
                 next.doFilter(request, filterCtx);
             } else {
-                TraceId traceId = TracingUtil.getCurrent();
                 Object provider = service.getServiceProvider();
 
                 MessageWrapper msg = request.message();
                 String methodName = msg.getMethodName();
                 Object[] args = msg.getArgs();
 
-                handleBeforeInvoke(interceptors, traceId, provider, methodName, args);
+                handleBeforeInvoke(interceptors, provider, methodName, args);
                 try {
                     next.doFilter(request, filterCtx);
                 } finally {
                     handleAfterInvoke(
-                            interceptors, traceId, provider, methodName, args, invokeCtx.getResult(), invokeCtx.getCause());
+                            interceptors, provider, methodName, args, invokeCtx.getResult(), invokeCtx.getCause());
                 }
             }
         }
@@ -441,7 +450,6 @@ public class MessageTask implements RejectedRunnable {
 
     // - Metrics -------------------------------------------------------------------------------------------------------
     static class MetricsHolder {
-        // 请求处理耗时统计(从request被解码开始, 到response数据被刷到OS内核缓冲区为止)
         static final Timer processingTimer              = Metrics.timer("processing");
         // 请求被拒绝次数统计
         static final Meter rejectionMeter               = Metrics.meter("rejection");

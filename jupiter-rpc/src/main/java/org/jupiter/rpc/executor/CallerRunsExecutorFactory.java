@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.jupiter.rpc.executor;
 
 import org.jupiter.common.util.SpiMetadata;
@@ -29,17 +28,6 @@ public class CallerRunsExecutorFactory extends AbstractExecutorFactory {
 
     @Override
     public CloseableExecutor newExecutor(Target target, String name) {
-        return new CloseableExecutor() {
-
-            @Override
-            public void execute(Runnable r) {
-                r.run();
-            }
-
-            @Override
-            public void shutdown() {
-                // do nothing
-            }
-        };
+        return null;
     }
 }

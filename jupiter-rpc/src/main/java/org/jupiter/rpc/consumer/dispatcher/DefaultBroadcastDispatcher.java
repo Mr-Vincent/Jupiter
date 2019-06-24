@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.jupiter.rpc.consumer.dispatcher;
 
 import org.jupiter.rpc.DispatchType;
@@ -65,7 +64,7 @@ public class DefaultBroadcastDispatcher extends AbstractDispatcher {
             request.bytes(s_code, bytes);
         }
 
-        InvokeFuture<T>[] futures = new DefaultInvokeFuture[channels.length];
+        DefaultInvokeFuture<T>[] futures = new DefaultInvokeFuture[channels.length];
         for (int i = 0; i < channels.length; i++) {
             JChannel channel = channels[i];
             if (isLowCopy) {

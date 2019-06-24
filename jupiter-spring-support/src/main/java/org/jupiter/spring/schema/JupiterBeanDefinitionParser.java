@@ -13,8 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.jupiter.spring.schema;
+
+import java.util.List;
 
 import org.jupiter.common.util.Lists;
 import org.jupiter.common.util.Pair;
@@ -40,8 +41,6 @@ import org.springframework.beans.factory.xml.ParserContext;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
-
-import java.util.List;
 
 /**
  * Jupiter
@@ -211,6 +210,7 @@ public class JupiterBeanDefinitionParser implements BeanDefinitionParser {
                     addProperty(def, (Element) item, "version", false);
                     addProperty(def, (Element) item, "serializerType", false);
                     addProperty(def, (Element) item, "loadBalancerType", false);
+                    addProperty(def, (Element) item, "extLoadBalancerName", false);
                     addProperty(def, (Element) item, "waitForAvailableTimeoutMillis", false);
                     addProperty(def, (Element) item, "invokeType", false);
                     addProperty(def, (Element) item, "dispatchType", false);
@@ -313,6 +313,7 @@ public class JupiterBeanDefinitionParser implements BeanDefinitionParser {
         }
     }
 
+    @SuppressWarnings("SameParameterValue")
     private static void addPropertyReferenceArray(
             RootBeanDefinition definition, Element element, String elementTypeName, String propertyName, boolean required) {
         String[] refArray = Strings.split(element.getAttribute(propertyName), ',');

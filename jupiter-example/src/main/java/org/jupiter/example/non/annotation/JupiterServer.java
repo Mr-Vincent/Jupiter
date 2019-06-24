@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.jupiter.example.non.annotation;
 
+import org.jupiter.common.util.SystemPropertyUtil;
 import org.jupiter.example.ServiceNonAnnotationTest;
 import org.jupiter.example.ServiceNonAnnotationTestImpl;
 import org.jupiter.monitor.MonitorServer;
@@ -33,6 +33,8 @@ import org.jupiter.transport.netty.JNettyTcpAcceptor;
 public class JupiterServer {
 
     public static void main(String[] args) {
+        SystemPropertyUtil.setProperty("jupiter.message.args.allow_null_array_arg", "true");
+        SystemPropertyUtil.setProperty("jupiter.serializer.protostuff.allow_null_array_element", "true");
         final JServer server = new DefaultServer().withAcceptor(new JNettyTcpAcceptor(18090));
         final MonitorServer monitor = new MonitorServer();
         try {
@@ -52,14 +54,10 @@ public class JupiterServer {
             server.connectToRegistryServer("127.0.0.1:20001");
             server.publish(provider);
 
-            Runtime.getRuntime().addShutdownHook(new Thread() {
-
-                @Override
-                public void run() {
-                    monitor.shutdownGracefully();
-                    server.shutdownGracefully();
-                }
-            });
+            Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+                monitor.shutdownGracefully();
+                server.shutdownGracefully();
+            }));
 
             server.start();
         } catch (InterruptedException e) {

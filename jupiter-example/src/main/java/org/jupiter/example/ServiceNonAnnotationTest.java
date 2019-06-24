@@ -13,8 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.jupiter.example;
+
+import java.util.List;
 
 /**
  * jupiter
@@ -24,5 +25,7 @@ package org.jupiter.example;
  */
 public interface ServiceNonAnnotationTest {
 
-    String sayHello(String name);
+    String sayHello(String arg1, Integer arg2, List<String> arg3);
+
+    String sayHello2(String[] args);
 }

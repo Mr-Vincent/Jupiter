@@ -13,14 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.jupiter.common.util.internal;
-
-import org.jupiter.common.util.ThrowUtil;
 
 import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.Set;
+
+import org.jupiter.common.util.ThrowUtil;
 
 /**
  * jupiter
@@ -78,7 +77,7 @@ public class InternalThreadLocal<V> {
         Object v = threadLocalMap.indexedVariable(variablesToRemoveIndex);
         Set<InternalThreadLocal<?>> variablesToRemove;
         if (v == InternalThreadLocalMap.UNSET || v == null) {
-            variablesToRemove = Collections.newSetFromMap(new IdentityHashMap<InternalThreadLocal<?>, Boolean>());
+            variablesToRemove = Collections.newSetFromMap(new IdentityHashMap<>());
             threadLocalMap.setIndexedVariable(variablesToRemoveIndex, variablesToRemove);
         } else {
             variablesToRemove = (Set<InternalThreadLocal<?>>) v;
@@ -150,7 +149,6 @@ public class InternalThreadLocal<V> {
     /**
      * Sets the value to uninitialized; a proceeding call to get() will trigger a call to initialValue().
      */
-    @SuppressWarnings("unchecked")
     public final void remove() {
         remove(InternalThreadLocalMap.getIfSet());
     }

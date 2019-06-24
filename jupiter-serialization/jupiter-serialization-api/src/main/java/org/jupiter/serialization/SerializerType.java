@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.jupiter.serialization;
 
 /**
@@ -34,7 +33,7 @@ public enum SerializerType {
     ;
 
     SerializerType(byte value) {
-        if (0x00 < value && value < 0x10) {
+        if (0x00 < value && value < 0x0f) {
             this.value = value;
         } else {
             throw new IllegalArgumentException("Out of range(0x01 ~ 0x0f): " + value);

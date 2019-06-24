@@ -13,11 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.jupiter.rpc;
 
 /**
- * 远程调用方式, 支持同步调用和异步调用, 异步方式支持Future以及Listener.
+ * 远程调用方式, 支持同步调用和异步调用, 异步方式支持 Future 以及 Listener.
  *
  * jupiter
  * org.jupiter.rpc
@@ -26,7 +25,8 @@ package org.jupiter.rpc;
  */
 public enum InvokeType {
     SYNC,   // 同步调用
-    ASYNC;  // 异步调用
+    ASYNC,  // 异步调用
+    AUTO;   // 当接口返回值是一个 CompletableFuture 或者它的子类将自动适配为异步调用, 否则为同步调用
 
     public static InvokeType parse(String name) {
         for (InvokeType s : values()) {
@@ -38,6 +38,6 @@ public enum InvokeType {
     }
 
     public static InvokeType getDefault() {
-        return SYNC;
+        return AUTO;
     }
 }

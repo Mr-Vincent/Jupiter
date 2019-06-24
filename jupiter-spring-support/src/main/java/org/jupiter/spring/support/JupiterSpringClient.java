@@ -13,23 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.jupiter.spring.support;
 
-import org.jupiter.common.util.*;
+import java.util.Collections;
+import java.util.List;
+
+import org.jupiter.common.util.Lists;
+import org.jupiter.common.util.Pair;
+import org.jupiter.common.util.Requires;
+import org.jupiter.common.util.Strings;
+import org.jupiter.common.util.SystemPropertyUtil;
+import org.jupiter.common.util.ThrowUtil;
 import org.jupiter.common.util.internal.logging.InternalLogger;
 import org.jupiter.common.util.internal.logging.InternalLoggerFactory;
 import org.jupiter.registry.RegistryService;
 import org.jupiter.rpc.DefaultClient;
 import org.jupiter.rpc.JClient;
 import org.jupiter.rpc.consumer.ConsumerInterceptor;
-import org.jupiter.transport.*;
+import org.jupiter.transport.JConfig;
+import org.jupiter.transport.JConnection;
+import org.jupiter.transport.JConnector;
+import org.jupiter.transport.JOption;
+import org.jupiter.transport.UnresolvedAddress;
+import org.jupiter.transport.UnresolvedSocketAddress;
 import org.springframework.beans.factory.InitializingBean;
-
-import java.util.Collections;
-import java.util.List;
-
-import static org.jupiter.common.util.Preconditions.checkNotNull;
 
 /**
  * jupiter client wrapper, 负责初始化并启动客户端.
@@ -101,13 +108,7 @@ public class JupiterSpringClient implements InitializingBean {
             }
         }
 
-        Runtime.getRuntime().addShutdownHook(new Thread() {
-
-            @Override
-            public void run() {
-                client.shutdownGracefully();
-            }
-        });
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> client.shutdownGracefully()));
     }
 
     public JClient getClient() {
@@ -169,7 +170,7 @@ public class JupiterSpringClient implements InitializingBean {
     public List<UnresolvedAddress> getProviderServerUnresolvedAddresses() {
         return providerServerUnresolvedAddresses == null
                 ?
-                Collections.<UnresolvedAddress>emptyList()
+                Collections.emptyList()
                 :
                 providerServerUnresolvedAddresses;
     }
@@ -197,6 +198,6 @@ public class JupiterSpringClient implements InitializingBean {
         } catch (Exception e) {
             ThrowUtil.throwException(e);
         }
-        return checkNotNull(defaultConnector, "default connector");
+        return Requires.requireNotNull(defaultConnector, "default connector");
     }
 }

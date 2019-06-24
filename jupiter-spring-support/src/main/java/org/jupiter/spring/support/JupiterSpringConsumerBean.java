@@ -13,8 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.jupiter.spring.support;
+
+import java.util.List;
 
 import org.jupiter.common.util.Lists;
 import org.jupiter.common.util.Strings;
@@ -33,8 +34,6 @@ import org.jupiter.transport.exception.ConnectFailedException;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
 
-import java.util.List;
-
 /**
  * Consumer bean, 负责构造并初始化 consumer 代理对象.
  *
@@ -52,6 +51,7 @@ public class JupiterSpringConsumerBean<T> implements FactoryBean<T>, Initializin
     private String version;                                     // 服务版本号, 通常在接口不兼容时版本号才需要升级
     private SerializerType serializerType;                      // 序列化/反序列化方式
     private LoadBalancerType loadBalancerType;                  // 软负载均衡类型
+    private String extLoadBalancerName;                         // 扩展软负载均衡唯一标识
     private long waitForAvailableTimeoutMillis = -1;            // 如果大于0, 表示阻塞等待直到连接可用并且该值为等待时间
 
     private transient T proxy;                                  // consumer代理对象
@@ -94,7 +94,7 @@ public class JupiterSpringConsumerBean<T> implements FactoryBean<T>, Initializin
         }
 
         if (loadBalancerType != null) {
-            factory.loadBalancerType(loadBalancerType);
+            factory.loadBalancerType(loadBalancerType, extLoadBalancerName);
         }
 
         if (client.isHasRegistryServer()) {
@@ -204,6 +204,14 @@ public class JupiterSpringConsumerBean<T> implements FactoryBean<T>, Initializin
         if (this.loadBalancerType == null) {
             throw new IllegalArgumentException(loadBalancerType);
         }
+    }
+
+    public String getExtLoadBalancerName() {
+        return extLoadBalancerName;
+    }
+
+    public void setExtLoadBalancerName(String extLoadBalancerName) {
+        this.extLoadBalancerName = extLoadBalancerName;
     }
 
     public long getWaitForAvailableTimeoutMillis() {

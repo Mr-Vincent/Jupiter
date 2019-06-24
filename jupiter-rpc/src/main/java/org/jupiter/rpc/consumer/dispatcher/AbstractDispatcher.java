@@ -13,11 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.jupiter.rpc.consumer.dispatcher;
+
+import java.util.List;
+import java.util.Map;
 
 import org.jupiter.common.util.JConstants;
 import org.jupiter.common.util.Maps;
+import org.jupiter.common.util.StackTraceUtil;
 import org.jupiter.common.util.SystemClock;
 import org.jupiter.common.util.internal.logging.InternalLogger;
 import org.jupiter.common.util.internal.logging.InternalLoggerFactory;
@@ -33,7 +36,6 @@ import org.jupiter.rpc.model.metadata.MessageWrapper;
 import org.jupiter.rpc.model.metadata.MethodSpecialConfig;
 import org.jupiter.rpc.model.metadata.ResultWrapper;
 import org.jupiter.rpc.model.metadata.ServiceMetadata;
-import org.jupiter.rpc.tracing.TraceId;
 import org.jupiter.serialization.Serializer;
 import org.jupiter.serialization.SerializerFactory;
 import org.jupiter.serialization.SerializerType;
@@ -43,11 +45,6 @@ import org.jupiter.transport.channel.JChannel;
 import org.jupiter.transport.channel.JChannelGroup;
 import org.jupiter.transport.channel.JFutureListener;
 import org.jupiter.transport.payload.JRequestPayload;
-
-import java.util.List;
-import java.util.Map;
-
-import static org.jupiter.common.util.StackTraceUtil.stackTrace;
 
 /**
  * jupiter
@@ -88,7 +85,7 @@ abstract class AbstractDispatcher implements Dispatcher {
     @Override
     public Dispatcher interceptors(List<ConsumerInterceptor> interceptors) {
         if (interceptors != null && !interceptors.isEmpty()) {
-            this.interceptors = interceptors.toArray(new ConsumerInterceptor[interceptors.size()]);
+            this.interceptors = interceptors.toArray(new ConsumerInterceptor[0]);
         }
         return this;
     }
@@ -173,15 +170,13 @@ abstract class AbstractDispatcher implements Dispatcher {
         final MessageWrapper message = request.message();
         final long timeoutMillis = getMethodSpecialTimeoutMillis(message.getMethodName());
         final ConsumerInterceptor[] interceptors = interceptors();
-        final TraceId traceId = message.getTraceId();
         final DefaultInvokeFuture<T> future = DefaultInvokeFuture
                 .with(request.invokeId(), channel, timeoutMillis, returnType, dispatchType)
-                .interceptors(interceptors)
-                .traceId(traceId);
+                .interceptors(interceptors);
 
         if (interceptors != null) {
             for (int i = 0; i < interceptors.length; i++) {
-                interceptors[i].beforeInvoke(traceId, request, channel);
+                interceptors[i].beforeInvoke(request, channel);
             }
         }
 
@@ -206,7 +201,7 @@ abstract class AbstractDispatcher implements Dispatcher {
                 }
 
                 if (logger.isWarnEnabled()) {
-                    logger.warn("Writes {} fail on {}, {}.", request, channel, stackTrace(cause));
+                    logger.warn("Writes {} fail on {}, {}.", request, channel, StackTraceUtil.stackTrace(cause));
                 }
 
                 ResultWrapper result = new ResultWrapper();

@@ -13,12 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.jupiter.common.util.internal;
 
-import sun.misc.Unsafe;
-
 import java.lang.reflect.Field;
+
+import sun.misc.Unsafe;
 
 /**
  * jupiter
@@ -26,23 +25,26 @@ import java.lang.reflect.Field;
  *
  * @author jiachun.fjc
  */
-public class UnsafeLongFieldUpdater<U> {
+final class UnsafeLongFieldUpdater<U> implements LongFieldUpdater<U> {
+
     private final long offset;
     private final Unsafe unsafe;
 
     UnsafeLongFieldUpdater(Unsafe unsafe, Class<? super U> tClass, String fieldName) throws NoSuchFieldException {
-        Field field = tClass.getDeclaredField(fieldName);
+        final Field field = tClass.getDeclaredField(fieldName);
         if (unsafe == null) {
             throw new NullPointerException("unsafe");
         }
         this.unsafe = unsafe;
-        offset = unsafe.objectFieldOffset(field);
+        this.offset = unsafe.objectFieldOffset(field);
     }
 
+    @Override
     public void set(U obj, long newValue) {
         unsafe.putLong(obj, offset, newValue);
     }
 
+    @Override
     public long get(U obj) {
         return unsafe.getLong(obj, offset);
     }

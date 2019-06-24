@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.jupiter.common.concurrent;
 
 import java.util.concurrent.BlockingQueue;
@@ -42,7 +41,7 @@ public class RejectedTaskPolicyWithReport extends AbstractRejectedExecutionHandl
     public void rejectedExecution(Runnable r, ThreadPoolExecutor e) {
         logger.error("Thread pool [{}] is exhausted! {}.", threadPoolName, e.toString());
 
-        dumpJvmInfo();
+        dumpJvmInfoIfNeeded();
 
         if (r instanceof RejectedRunnable) {
             ((RejectedRunnable) r).rejected(); // 交给用户来处理

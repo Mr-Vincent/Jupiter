@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.jupiter.monitor.handler;
 
 import io.netty.channel.Channel;
+
 import org.jupiter.common.util.JConstants;
 import org.jupiter.monitor.Command;
 import org.jupiter.registry.RegistryMonitor;
@@ -46,7 +46,7 @@ public class ByServiceHandler extends ChildCommandHandler<RegistryHandler> {
         }
 
         for (String a : monitor.listAddressesByService(args[2], args[3], args[4])) {
-            if (childGrep != null && childGrep == Command.ChildCommand.GREP) {
+            if (childGrep == Command.ChildCommand.GREP) {
                 if (a.contains(args[6])) {
                     channel.writeAndFlush(a + JConstants.NEWLINE);
                 }

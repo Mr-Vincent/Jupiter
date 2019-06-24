@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.jupiter.rpc.load.balance;
 
 /**
@@ -23,8 +22,9 @@ package org.jupiter.rpc.load.balance;
  * @author jiachun.fjc
  */
 public enum LoadBalancerType {
-    ROUND_ROBIN,    // 加权轮询
-    RANDOM;         // 加权随机
+    ROUND_ROBIN,                // 加权轮询
+    RANDOM,                     // 加权随机
+    EXT_SPI;                    // 用户自行扩展, SPI方式加载
 
     public static LoadBalancerType parse(String name) {
         for (LoadBalancerType s : values()) {

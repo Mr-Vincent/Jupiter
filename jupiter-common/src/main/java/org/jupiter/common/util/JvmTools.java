@@ -13,10 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.jupiter.common.util;
-
-import com.sun.management.HotSpotDiagnosticMXBean;
 
 import java.io.File;
 import java.lang.management.ManagementFactory;
@@ -25,6 +22,8 @@ import java.lang.management.MemoryUsage;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+
+import com.sun.management.HotSpotDiagnosticMXBean;
 
 /**
  * Jupiter
@@ -90,8 +89,8 @@ public final class JvmTools {
 
     /**
      * Dumps the heap to the outputFile file in the same format as the hprof heap dump.
-     * @param outputFile    the system-dependent filename
-     * @param live          if true dump only live objects i.e. objects that are reachable from others
+     * @param outputFile the system-dependent filename
+     * @param live       if true dump only live objects i.e. objects that are reachable from others
      */
     @SuppressWarnings("all")
     public static void jMap(String outputFile, boolean live) throws Exception {

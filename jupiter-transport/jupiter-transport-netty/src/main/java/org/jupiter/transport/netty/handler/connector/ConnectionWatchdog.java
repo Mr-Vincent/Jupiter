@@ -13,22 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.jupiter.transport.netty.handler.connector;
 
+import java.net.SocketAddress;
+import java.util.concurrent.TimeUnit;
+
 import io.netty.bootstrap.Bootstrap;
-import io.netty.channel.*;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelFutureListener;
+import io.netty.channel.ChannelHandler;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelInboundHandlerAdapter;
+import io.netty.channel.ChannelInitializer;
 import io.netty.util.Timeout;
 import io.netty.util.Timer;
 import io.netty.util.TimerTask;
+
 import org.jupiter.common.util.internal.logging.InternalLogger;
 import org.jupiter.common.util.internal.logging.InternalLoggerFactory;
 import org.jupiter.transport.channel.JChannelGroup;
 import org.jupiter.transport.netty.channel.NettyChannel;
 import org.jupiter.transport.netty.handler.ChannelHandlerHolder;
-
-import java.net.SocketAddress;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Connections watchdog.
@@ -123,17 +129,13 @@ public abstract class ConnectionWatchdog extends ChannelInboundHandlerAdapter im
             future = bootstrap.connect(remoteAddress);
         }
 
-        future.addListener(new ChannelFutureListener() {
+        future.addListener((ChannelFutureListener) f -> {
+            boolean succeed = f.isSuccess();
 
-            @Override
-            public void operationComplete(ChannelFuture f) throws Exception {
-                boolean succeed = f.isSuccess();
+            logger.warn("Reconnects with {}, {}.", remoteAddress, succeed ? "succeed" : "failed");
 
-                logger.warn("Reconnects with {}, {}.", remoteAddress, succeed ? "succeed" : "failed");
-
-                if (!succeed) {
-                    f.channel().pipeline().fireChannelInactive();
-                }
+            if (!succeed) {
+                f.channel().pipeline().fireChannelInactive();
             }
         });
     }

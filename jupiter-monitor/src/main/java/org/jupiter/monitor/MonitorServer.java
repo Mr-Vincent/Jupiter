@@ -13,17 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.jupiter.monitor;
 
+import java.net.SocketAddress;
+import java.nio.charset.StandardCharsets;
+
 import io.netty.bootstrap.ServerBootstrap;
-import io.netty.channel.*;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelHandler;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelInboundHandlerAdapter;
+import io.netty.channel.ChannelInitializer;
 import io.netty.handler.codec.DelimiterBasedFrameDecoder;
 import io.netty.handler.codec.Delimiters;
 import io.netty.handler.codec.string.StringDecoder;
 import io.netty.handler.codec.string.StringEncoder;
 import io.netty.util.ReferenceCountUtil;
+
 import org.jupiter.common.util.JConstants;
+import org.jupiter.common.util.StackTraceUtil;
 import org.jupiter.common.util.Strings;
 import org.jupiter.common.util.internal.logging.InternalLogger;
 import org.jupiter.common.util.internal.logging.InternalLoggerFactory;
@@ -35,10 +44,6 @@ import org.jupiter.registry.RegistryService;
 import org.jupiter.rpc.JClient;
 import org.jupiter.rpc.JServer;
 import org.jupiter.transport.netty.NettyTcpAcceptor;
-
-import java.net.SocketAddress;
-
-import static org.jupiter.common.util.StackTraceUtil.stackTrace;
 
 /**
  * 监控服务, RegistryServer与ProviderServer都应该启用
@@ -78,7 +83,7 @@ public class MonitorServer extends NettyTcpAcceptor {
 
     // handlers
     private final TelnetHandler handler = new TelnetHandler();
-    private final StringEncoder encoder = new StringEncoder(JConstants.UTF8);
+    private final StringEncoder encoder = new StringEncoder(StandardCharsets.UTF_8);
 
     private volatile RegistryMonitor registryMonitor;
     private volatile JServer jupiterServer;
@@ -104,7 +109,7 @@ public class MonitorServer extends NettyTcpAcceptor {
             protected void initChannel(Channel ch) throws Exception {
                 ch.pipeline().addLast(
                         new DelimiterBasedFrameDecoder(8192, Delimiters.lineDelimiter()),
-                        new StringDecoder(JConstants.UTF8),
+                        new StringDecoder(StandardCharsets.UTF_8),
                         encoder,
                         handler);
             }
@@ -190,7 +195,7 @@ public class MonitorServer extends NettyTcpAcceptor {
 
         @Override
         public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-            logger.error("An exception was caught: {}, channel {}.", stackTrace(cause), ctx.channel());
+            logger.error("An exception was caught: {}, channel {}.", StackTraceUtil.stackTrace(cause), ctx.channel());
 
             ctx.close();
         }

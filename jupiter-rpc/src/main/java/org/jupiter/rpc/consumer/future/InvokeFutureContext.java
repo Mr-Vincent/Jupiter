@@ -13,10 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.jupiter.rpc.consumer.future;
 
-import static org.jupiter.common.util.Preconditions.checkNotNull;
+import java.util.concurrent.CompletableFuture;
+
+import org.jupiter.common.util.Requires;
 
 /**
  * 异步调用上下文, 用于获取当前上下文中的 {@link InvokeFuture}, 基于 {@link ThreadLocal}.
@@ -35,7 +36,7 @@ public class InvokeFutureContext {
      * 获取单播/广播调用的 {@link InvokeFuture}, 不协助类型转换.
      */
     public static InvokeFuture<?> future() {
-        InvokeFuture<?> future = checkNotNull(futureThreadLocal.get(), "future");
+        InvokeFuture<?> future = Requires.requireNotNull(futureThreadLocal.get(), "future");
         futureThreadLocal.remove();
         return future;
     }
@@ -50,6 +51,14 @@ public class InvokeFutureContext {
         return (InvokeFuture<V>) f;
     }
 
+    public static CompletableFuture<?> completableFuture() {
+        return (CompletableFuture<?>) future();
+    }
+
+    public static <V> CompletableFuture<V>completableFuture(Class<V> expectReturnType) {
+        return (CompletableFuture<V>) future(expectReturnType);
+    }
+
     /**
      * 获取广播调用的 {@link InvokeFutureGroup} 并协助类型转换, {@code expectReturnType} 为期望定的返回值类型.
      */
@@ -59,8 +68,8 @@ public class InvokeFutureContext {
 
         if (f instanceof InvokeFutureGroup) {
             return (InvokeFutureGroup<V>) f;
-        } else if (f instanceof FailSafeInvokeFuture) {
-            InvokeFuture real_f = ((FailSafeInvokeFuture) f).future();
+        } else if (f instanceof FailsafeInvokeFuture) {
+            InvokeFuture real_f = ((FailsafeInvokeFuture) f).future();
             if (real_f instanceof InvokeFutureGroup) {
                 return (InvokeFutureGroup<V>) real_f;
             }

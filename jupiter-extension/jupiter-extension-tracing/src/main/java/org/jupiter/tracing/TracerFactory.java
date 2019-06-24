@@ -13,18 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.jupiter.tracing;
-
-import io.opentracing.Tracer;
-import io.opentracing.noop.NoopTracerFactory;
-import org.jupiter.common.util.JServiceLoader;
-import org.jupiter.common.util.internal.logging.InternalLogger;
-import org.jupiter.common.util.internal.logging.InternalLoggerFactory;
 
 import java.util.Iterator;
 
-import static org.jupiter.common.util.StackTraceUtil.stackTrace;
+import io.opentracing.Tracer;
+import io.opentracing.noop.NoopTracerFactory;
+
+import org.jupiter.common.util.JServiceLoader;
+import org.jupiter.common.util.StackTraceUtil;
+import org.jupiter.common.util.internal.logging.InternalLogger;
+import org.jupiter.common.util.internal.logging.InternalLoggerFactory;
 
 /**
  *
@@ -62,7 +61,7 @@ public interface TracerFactory {
                     return NoopTracerFactory.create();
                 }
             } catch (Throwable t) {
-                logger.error("Load tracer failed: {}.", stackTrace(t));
+                logger.error("Load tracer failed: {}.", StackTraceUtil.stackTrace(t));
             }
             return NoopTracerFactory.create();
         }

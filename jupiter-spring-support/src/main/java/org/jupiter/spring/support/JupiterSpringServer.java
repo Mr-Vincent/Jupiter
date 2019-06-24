@@ -13,13 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.jupiter.spring.support;
 
-import org.jupiter.common.util.ThrowUtil;
+import java.util.List;
+
 import org.jupiter.common.util.Pair;
+import org.jupiter.common.util.Requires;
 import org.jupiter.common.util.Strings;
 import org.jupiter.common.util.SystemPropertyUtil;
+import org.jupiter.common.util.ThrowUtil;
 import org.jupiter.common.util.internal.logging.InternalLogger;
 import org.jupiter.common.util.internal.logging.InternalLoggerFactory;
 import org.jupiter.registry.RegistryService;
@@ -33,10 +35,6 @@ import org.jupiter.transport.JConfig;
 import org.jupiter.transport.JConfigGroup;
 import org.jupiter.transport.JOption;
 import org.springframework.beans.factory.InitializingBean;
-
-import java.util.List;
-
-import static org.jupiter.common.util.Preconditions.checkNotNull;
 
 /**
  * 服务端 acceptor wrapper, 负责初始化并启动acceptor.
@@ -104,13 +102,7 @@ public class JupiterSpringServer implements InitializingBean {
         // 全局限流
         server.withGlobalFlowController(globalFlowController);
 
-        Runtime.getRuntime().addShutdownHook(new Thread() {
-
-            @Override
-            public void run() {
-                server.shutdownGracefully();
-            }
-        });
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> server.shutdownGracefully()));
 
         try {
             server.start(false);
@@ -201,6 +193,6 @@ public class JupiterSpringServer implements InitializingBean {
         } catch (Exception e) {
             ThrowUtil.throwException(e);
         }
-        return checkNotNull(defaultAcceptor, "default acceptor");
+        return Requires.requireNotNull(defaultAcceptor, "default acceptor");
     }
 }

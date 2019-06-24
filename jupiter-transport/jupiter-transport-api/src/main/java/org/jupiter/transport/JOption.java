@@ -13,15 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.jupiter.transport;
-
-import org.jupiter.common.util.AbstractConstant;
-import org.jupiter.common.util.ConstantPool;
 
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
+
+import org.jupiter.common.util.AbstractConstant;
+import org.jupiter.common.util.ConstantPool;
 
 /**
  * Jupiter transport option.
