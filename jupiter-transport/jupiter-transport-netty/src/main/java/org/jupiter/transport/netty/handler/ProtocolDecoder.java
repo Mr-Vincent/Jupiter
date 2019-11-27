@@ -128,6 +128,8 @@ public class ProtocolDecoder extends ReplayingDecoder<ProtocolDecoder.State> {
                         throw IoSignals.ILLEGAL_SIGN;
                 }
                 checkpoint(State.MAGIC);
+                default:
+                    throw new Error("Shouldn't reach here.");
         }
     }
 

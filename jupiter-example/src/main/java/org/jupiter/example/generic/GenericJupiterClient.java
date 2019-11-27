@@ -56,10 +56,12 @@ public class GenericJupiterClient {
                 .newProxyInstance();
 
         try {
-            Object result = invoker.$invoke("sayHello", "Luca");
-            System.out.println(result);
-            InvokeFuture<Object> future = InvokeFutureContext.future(Object.class);
-            System.out.println(future.getResult());
+            for (int i = 0; i < 101; i++) {
+                invoker.$invoke("sayHello", "Luca");
+                InvokeFuture<Object> future = InvokeFutureContext.future(Object.class);
+                System.out.println(future.getResult());
+            }
+
         } catch (Throwable e) {
             e.printStackTrace();
         }

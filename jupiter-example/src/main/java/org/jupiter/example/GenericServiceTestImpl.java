@@ -28,6 +28,7 @@ public class GenericServiceTestImpl implements GenericServiceTest {
 
     @Override
     public String sayHello(String name) {
+        int a = 3/0;
         return "Hello " + name;
     }
 }

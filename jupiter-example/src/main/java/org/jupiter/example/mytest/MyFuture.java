@@ -14,7 +14,7 @@ import java.util.concurrent.*;
  */
 public class MyFuture {
 
-    private static ThreadPoolExecutor poolExecutor = new ThreadPoolExecutor(0, 4,
+    private static ExecutorService poolExecutor = new ThreadPoolExecutor(0, 4,
             1000L, TimeUnit.MILLISECONDS,
             new LinkedBlockingQueue<Runnable>(), new ThreadFactory() {
         @Override
@@ -24,6 +24,14 @@ public class MyFuture {
     });
 
     public static void main(String[] args) throws ExecutionException, InterruptedException {
+
+        poolExecutor.execute(new Runnable() {
+            @Override
+            public void run() {
+
+            }
+        });
+
         Future<?> futureRunnable = poolExecutor.submit(new Runnable() {
             @Override
             public void run() {

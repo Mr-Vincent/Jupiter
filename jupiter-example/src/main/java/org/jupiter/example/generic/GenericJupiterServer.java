@@ -43,13 +43,13 @@ public class GenericJupiterServer {
 
             ServiceWrapper provider = server.serviceRegistry()
                     .provider(new GenericServiceTestImpl())
-                    .flowController(new FlowController<JRequest>() { // provider级别限流器, 可不设置
+                    .flowController(new FlowController<JRequest>() {
 
                         private AtomicLong count = new AtomicLong();
 
                         @Override
                         public ControlResult flowControl(JRequest request) {
-                            if (count.getAndIncrement() > 9999) {
+                            if (count.getAndIncrement() > 100) {
                                 return new ControlResult(false, "fuck out!!!");
                             }
                             return ControlResult.ALLOWED;

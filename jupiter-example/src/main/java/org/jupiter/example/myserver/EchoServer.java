@@ -5,6 +5,10 @@ import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
+import io.netty.util.ReferenceCountUtil;
+
+import java.util.Date;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Created with IntelliJ IDEA.
@@ -16,6 +20,7 @@ import io.netty.channel.socket.nio.NioServerSocketChannel;
  */
 public class EchoServer {
     private int port;
+    private EchoServerHandler handler = new EchoServerHandler();
 
     public EchoServer(int port) {
         this.port = port;
@@ -23,7 +28,7 @@ public class EchoServer {
 
     public void run() throws Exception {
         EventLoopGroup bossGroup = new NioEventLoopGroup();
-        EventLoopGroup workerGroup = new NioEventLoopGroup();
+        EventLoopGroup workerGroup = new NioEventLoopGroup(1);
         try {
             ServerBootstrap b = new ServerBootstrap();
             b.group(bossGroup, workerGroup)
@@ -31,10 +36,11 @@ public class EchoServer {
                         .childHandler(new ChannelInitializer<SocketChannel>() {
                         @Override
                         public void initChannel(SocketChannel ch) throws Exception {
-                            ch.pipeline().addLast(new EchoServerHandler());
+                            ch.pipeline().addLast(handler);
                         }
                     })
                     .option(ChannelOption.SO_BACKLOG, 128)
+                    .option(ChannelOption.AUTO_READ,true)
                     .childOption(ChannelOption.SO_KEEPALIVE, true);
 
             // Bind and start to accept incoming connections.
@@ -60,11 +66,14 @@ public class EchoServer {
         new EchoServer(port).run();
     }
 
+    @ChannelHandler.Sharable
     class EchoServerHandler extends ChannelInboundHandlerAdapter {
 
         @Override
-        public void channelRead(ChannelHandlerContext ctx, Object msg) {
+        public void channelRead(ChannelHandlerContext ctx, Object msg) throws InterruptedException {
+            TimeUnit.SECONDS.sleep(20);
             ctx.write(msg);
+            System.out.println(new Date());
         }
 
         @Override
