@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.Iterator;
@@ -85,7 +86,7 @@ public final class JServiceLoader<S> implements Iterable<S> {
     public S first() {
         List<S> sortList = sort();
         if (sortList.isEmpty()) {
-            throw fail(service, "could not find any implementation for class " + service.getName());
+            throw fail(service, "could not find any implementation for class");
         }
         return sortList.get(0);
     }
@@ -172,29 +173,16 @@ public final class JServiceLoader<S> implements Iterable<S> {
         return lc + 1;
     }
 
-    @SuppressWarnings("all")
     private Iterator<String> parse(Class<?> service, URL url) {
-        InputStream in = null;
-        BufferedReader r = null;
-        ArrayList<String> names = Lists.newArrayList();
-        try {
-            in = url.openStream();
-            r = new BufferedReader(new InputStreamReader(in, "utf-8"));
+        ArrayList<String> names = new ArrayList<>();
+        try (InputStream in = url.openStream();
+             BufferedReader r = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8))) {
             int lc = 1;
-            while ((lc = parseLine(service, url, r, lc, names)) >= 0) ;
+            // noinspection StatementWithEmptyBody
+            while ((lc = parseLine(service, url, r, lc, names)) >= 0)
+                ;
         } catch (IOException x) {
             throw fail(service, "error reading configuration file", x);
-        } finally {
-            try {
-                if (r != null) {
-                    r.close();
-                }
-                if (in != null) {
-                    in.close();
-                }
-            } catch (IOException y) {
-                throw fail(service, "error closing configuration file", y);
-            }
         }
         return names.iterator();
     }
