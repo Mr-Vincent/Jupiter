@@ -1,6 +1,7 @@
 package org.jupiter.example.myserver;
 
 import io.netty.bootstrap.ServerBootstrap;
+import io.netty.buffer.ByteBuf;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
@@ -22,6 +23,10 @@ public class EchoServer {
     private int port;
     private EchoServerHandler handler = new EchoServerHandler();
 
+    private TestHandler testHandler = new TestHandler();
+
+    private OutHandler outHandler = new OutHandler();
+
     public EchoServer(int port) {
         this.port = port;
     }
@@ -36,7 +41,7 @@ public class EchoServer {
                         .childHandler(new ChannelInitializer<SocketChannel>() {
                         @Override
                         public void initChannel(SocketChannel ch) throws Exception {
-                            ch.pipeline().addLast(handler);
+                            ch.pipeline().addLast(outHandler,testHandler,handler);
                         }
                     })
                     .option(ChannelOption.SO_BACKLOG, 128)
@@ -67,17 +72,61 @@ public class EchoServer {
     }
 
     @ChannelHandler.Sharable
-    class EchoServerHandler extends ChannelInboundHandlerAdapter {
+    class OutHandler extends ChannelOutboundHandlerAdapter{
+        @Override
+        public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
+            System.out.println("OutHandler write");
+            String response = "I am ok!";
+            ByteBuf encoded = ctx.alloc().buffer(4 * response.length());
+            encoded.writeBytes(response.getBytes());
+            System.out.println(msg);
+            super.write(ctx, encoded, promise);
+        }
 
         @Override
+        public void flush(ChannelHandlerContext ctx) throws Exception {
+            System.out.println("OutHandler flush");
+            super.flush(ctx);
+        }
+    }
+    @ChannelHandler.Sharable
+    class TestHandler extends ChannelInboundHandlerAdapter{
+        @Override
         public void channelRead(ChannelHandlerContext ctx, Object msg) throws InterruptedException {
-            TimeUnit.SECONDS.sleep(20);
-            ctx.write(msg);
+            System.out.println("TestHandler");
+            ctx.fireChannelRead(msg);
             System.out.println(new Date());
         }
 
         @Override
         public void channelReadComplete(ChannelHandlerContext ctx) {
+            System.out.println("test 读完了");
+            ctx.fireChannelReadComplete();
+        }
+
+        @Override
+        public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
+            // Close the connection when an exception is raised.
+            System.err.println("testHandler error");
+            cause.printStackTrace();
+            ctx.close();
+        }
+    }
+
+    @ChannelHandler.Sharable
+    class EchoServerHandler extends ChannelInboundHandlerAdapter {
+
+        @Override
+        public void channelRead(ChannelHandlerContext ctx, Object msg) throws InterruptedException {
+            System.out.println("EchoServerHandler--->" + msg);
+            System.out.println(new Date());
+            // 这是最后一个inbound handler 因此这里write到out bound handler中
+            ctx.write(msg);
+        }
+
+        @Override
+        public void channelReadComplete(ChannelHandlerContext ctx) {
+            System.out.println("echo 读完了");
             ctx.flush();
         }
 

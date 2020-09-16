@@ -41,7 +41,4 @@
         <appender-ref ref="STD_OUT" />
     </root>
 
-    <root level="DEBUG">
-        <appender-ref ref="ASYNC_OUT" />
-    </root>
 </configuration>

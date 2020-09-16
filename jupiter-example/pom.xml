@@ -30,6 +30,10 @@
 
     <dependencies>
         <dependency>
+            <groupId>org.jupiter-rpc</groupId>
+            <artifactId>jupiter-rpc</artifactId>
+        </dependency>
+        <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>jupiter-all</artifactId>
             <version>${project.version}</version>

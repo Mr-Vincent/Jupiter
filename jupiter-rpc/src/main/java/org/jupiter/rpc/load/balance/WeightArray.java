@@ -21,13 +21,13 @@ package org.jupiter.rpc.load.balance;
  *
  * @author jiachun.fjc
  */
-final class WeightArray {
+public final class WeightArray {
 
     private final int[] array;
     private final int length;
     private int gcd;
 
-    WeightArray(int[] array, int length) {
+    public WeightArray(int[] array, int length) {
         this.array = array;
         this.length = (array != null ? array.length : length);
     }

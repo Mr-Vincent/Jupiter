@@ -59,7 +59,7 @@ public class JupiterServer {
             ServiceWrapper provider = server.serviceRegistry()
                     .provider(new ServiceTestImpl())
                     .weight(60)
-                    .flowController(new FlowController<JRequest>() { // provider级别限流器, 可以不设置
+                    .flowController(new FlowController<JRequest>() {
 
                         private AtomicLong count = new AtomicLong();
 
@@ -73,7 +73,7 @@ public class JupiterServer {
                     })
                     .register();
 
-            server.connectToRegistryServer("127.0.0.1:2181,127.0.0.1:2182,127.0.0.1:2183");
+            server.connectToRegistryServer("172.16.0.64:2181");
             server.publish(provider);
 
             Runtime.getRuntime().addShutdownHook(new Thread(server::shutdownGracefully));

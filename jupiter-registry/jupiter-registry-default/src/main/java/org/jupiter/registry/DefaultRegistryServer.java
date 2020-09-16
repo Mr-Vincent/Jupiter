@@ -235,6 +235,7 @@ public final class DefaultRegistryServer extends NettyTcpAcceptor implements Reg
                 msg.version(config.newVersion()); // 版本号+1
                 msg.data(Pair.of(serviceMeta, meta));
 
+                // 去给所有的订阅者推送消息
                 subscriberChannels.writeAndFlush(msg, ch -> {
                     boolean doSend = isChannelSubscribeOnServiceMeta(serviceMeta, ch);
                     if (doSend) {
@@ -571,6 +572,7 @@ public final class DefaultRegistryServer extends NettyTcpAcceptor implements Reg
                         } else if (obj.messageCode() == JProtocolHeader.PUBLISH_CANCEL_SERVICE) {
                             handlePublishCancel(meta, ch);
                         }
+                        // 收到客户端消息 这里还要额外统一回复ack
                         ch.writeAndFlush(new Acknowledge(obj.sequence())) // 回复ACK
                                 .addListener(ChannelFutureListener.FIRE_EXCEPTION_ON_FAILURE);
 
@@ -587,6 +589,7 @@ public final class DefaultRegistryServer extends NettyTcpAcceptor implements Reg
                         break;
                 }
             } else if (msg instanceof Acknowledge) {
+                // 服务端收到了ack消息，也得将本地ack消息移除掉。为什么服务端也会受到ack呢？因为服务端也会发消息呀 哈哈
                 handleAcknowledge((Acknowledge) msg, ch);
             } else {
                 logger.warn("Unexpected message type received: {}, channel: {}.", msg.getClass(), ch);

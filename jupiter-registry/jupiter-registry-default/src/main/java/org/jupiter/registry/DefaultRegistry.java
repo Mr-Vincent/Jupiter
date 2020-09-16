@@ -438,6 +438,7 @@ public final class DefaultRegistry extends NettyTcpConnector {
 
                 switch (obj.messageCode()) {
                     case JProtocolHeader.PUBLISH_SERVICE: {
+                        System.out.println("====1====");
                         Pair<RegisterMeta.ServiceMeta, ?> data = (Pair<RegisterMeta.ServiceMeta, ?>) obj.data();
                         Object metaObj = data.getSecond();
 
@@ -469,6 +470,7 @@ public final class DefaultRegistry extends NettyTcpConnector {
                         break;
                     }
                     case JProtocolHeader.PUBLISH_CANCEL_SERVICE: {
+                        System.out.println("====2====");
                         Pair<RegisterMeta.ServiceMeta, RegisterMeta> data =
                                 (Pair<RegisterMeta.ServiceMeta, RegisterMeta>) obj.data();
                         registryService.notify(
@@ -565,6 +567,9 @@ public final class DefaultRegistry extends NettyTcpConnector {
         }
     }
 
+    /**
+     * 没有收到ack消息，意味着发送失败，这里补偿一下 进行重发。
+     */
     private class AckTimeoutScanner implements Runnable {
 
         @SuppressWarnings("all")

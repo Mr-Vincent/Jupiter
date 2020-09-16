@@ -18,8 +18,19 @@ import io.netty.handler.logging.LoggingHandler;
  */
 public class ReconnectClient extends HeartBeatsClient{
 
+    /**
+     * 最大尝试次数
+     */
+    private static int MAX_TRIES = 10;
+
+    private int attempt;
+
     @Override
     protected void connect(int port, String host) throws InterruptedException {
+        if(attempt > MAX_TRIES){
+            System.out.println("超过最大重连尝试，放弃重连了");
+            return;
+        }
         ChannelFuture f = null;
         EventLoopGroup group = new NioEventLoopGroup();
         try {
@@ -46,6 +57,7 @@ public class ReconnectClient extends HeartBeatsClient{
                 }
             }
             System.out.println("因为某些原因连接断开，准备重连");
+            attempt++;
             // 无限递归 有bug
             connect(port, host);
         }

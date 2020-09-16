@@ -28,9 +28,9 @@ import static java.lang.Math.min;
  *
  * @author jiachun.fjc
  */
-final class WeightSupport {
+public final class WeightSupport {
 
-    static int binarySearchIndex(WeightArray weightArray, int length, int value) {
+    public static int binarySearchIndex(WeightArray weightArray, int length, int value) {
         int low = 0;
         int high = length - 1;
 

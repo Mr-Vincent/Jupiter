@@ -38,11 +38,12 @@ public class JupiterClient {
         final JClient client = new DefaultClient(RegistryService.RegistryType.ZOOKEEPER)
                 .withConnector(new JNettyTcpConnector());
         // 连接RegistryServer
-        client.connectToRegistryServer("127.0.0.1:2181,127.0.0.1:2182,127.0.0.1:2183");
+        client.connectToRegistryServer("172.16.0.64");
         // 自动管理可用连接
         JConnector.ConnectionWatcher watcher = client.watchConnections(ServiceTest.class, "1.0.0.daily");
+
         // 等待连接可用
-        if (!watcher.waitForAvailable(3000)) {
+        if (!watcher.waitForAvailable(13000)) {
             throw new ConnectFailedException();
         }
 

@@ -242,6 +242,7 @@ public abstract class AbstractRegistryService implements RegistryService {
         RegisterValue value = registries.get(serviceMeta);
         if (value == null) {
             RegisterValue newValue = new RegisterValue();
+            // 如果要放进去进去的key 之前就存在，那么 返回之前的key对应 的value 如果没有 返回null
             value = registries.putIfAbsent(serviceMeta, newValue);
             if (value == null) {
                 value = newValue;
